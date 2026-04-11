@@ -5,6 +5,7 @@ export interface Bookmark {
   title: string
   url: string
   favicon?: string
+  coverImageUrl?: string
   category: BookmarkCategory
   notes?: string
   createdAt: string
