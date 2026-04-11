@@ -1,4 +1,4 @@
-import { Dumbbell, Palette, BookOpen } from 'lucide-react'
+import { BookOpen, Dumbbell, Grid2x2, LayoutList, Palette } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { ActiveQuestCard } from '../components/goals/ActiveQuestCard'
 import { GoalImageCard } from '../components/goals/GoalImageCard'
@@ -10,6 +10,8 @@ import { NewGoalCard } from '../components/goals/NewGoalCard'
 
 const forestImage =
   'https://lh3.googleusercontent.com/aida-public/AB6AXuCEbiR53ikqYMZvt8bg4_bMDkpfUohpaj1ydpes9HWNg20KqMBR7YMOgQ3a2ZY1G7MfqiZF5-ATqLEKTDq53Vph9moMEg84oXkGvPsYNskV3eT77oHWkhIKLh1fSZFVdZa114Ria3t-5snqkomHAIj4cp0mLw8XvYg4Y1k4IM2K_XhP6Ifdq0qXfXwrLX9eZl_xz-bElIK2xxUF7VgKAdsur3d2iAoL4hcQECoQ9Rd5dMbQkEW6437Rl-jEOPQECrhh57brXa94Xl0'
+
+type ViewMode = 'grid' | 'list'
 
 type GoalCardSeed = {
   id: string
@@ -59,6 +61,7 @@ export function GoalsPage() {
   const [searchValue, setSearchValue] = useState('')
   const [statusText, setStatusText] = useState('3 active goals in focus')
   const [goalCards, setGoalCards] = useState(seededGoals)
+  const [viewMode, setViewMode] = useState<ViewMode>('grid')
 
   const filteredGoalCards = useMemo(() => {
     const query = searchValue.trim().toLowerCase()
@@ -91,6 +94,8 @@ export function GoalsPage() {
       <GoalsHeader
         searchValue={searchValue}
         onSearchValueChange={setSearchValue}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
         onOpenSettings={() => setStatusText('Settings opened')}
         onOpenArchive={() => setStatusText('Archive viewed')}
         onOpenNotifications={() => setStatusText('Notifications checked')}
@@ -109,7 +114,47 @@ export function GoalsPage() {
         />
       </section>
 
-      <section className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+      <div className="mb-6 flex justify-end md:hidden">
+        <div className="relative flex items-center gap-1 rounded-full border border-outline-variant/20 bg-surface-container-lowest p-1">
+          <span
+            aria-hidden="true"
+            className={[
+              'absolute left-1 top-1 h-9 w-9 rounded-full bg-primary transition-transform duration-300 ease-out',
+              viewMode === 'grid' ? 'translate-x-0' : 'translate-x-9',
+            ].join(' ')}
+          />
+          <button
+            type="button"
+            onClick={() => setViewMode('grid')}
+            className={[
+              'relative z-10 inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300',
+              viewMode === 'grid' ? 'text-on-primary' : 'text-on-surface-variant hover:text-on-surface',
+            ].join(' ')}
+            aria-label="Grid view"
+          >
+            <Grid2x2 size={15} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('list')}
+            className={[
+              'relative z-10 inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300',
+              viewMode === 'list' ? 'text-on-primary' : 'text-on-surface-variant hover:text-on-surface',
+            ].join(' ')}
+            aria-label="List view"
+          >
+            <LayoutList size={15} />
+          </button>
+        </div>
+      </div>
+
+      <section
+        key={viewMode}
+        className={[
+          'goals-layout-enter grid gap-6',
+          viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'mx-auto grid-cols-1 xl:max-w-5xl',
+        ].join(' ')}
+      >
         <GoalImageCard
           title="Wilderness Solo Trip"
           category="Personal"
