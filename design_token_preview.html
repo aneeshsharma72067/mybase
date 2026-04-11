@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Design Token Preview</title>
+ <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style id="dynamic-style"></style>
+</head>
+<body class="bg-gray-100 p-6">
+  <div class="max-w-5xl mx-auto">
+    <h1 class="text-3xl font-bold mb-4">Design Token Preview</h1>
+
+    <textarea id="cssInput" class="w-full h-64 p-4 border rounded mb-4" placeholder="Paste your CSS here..."></textarea>
+    <button onclick="applyCSS()" class="bg-black text-white px-4 py-2 rounded">Render</button>
+
+    <div id="preview" class="mt-8 space-y-10"></div>
+  </div>
+
+  <script>
+    function normalizeCSS(css) {
+      // 🔥 Fix 1: Convert @theme → :root (browser doesn't understand @theme)
+      css = css.replace(/@theme\s*\{/g, ':root {');
+
+      // 🔥 Fix 2: Remove @apply (not supported in CDN runtime)
+      css = css.replace(/@apply[^;]+;/g, '');
+
+      return css;
+    }
+
+    function applyCSS() {
+      let css = document.getElementById('cssInput').value;
+
+      css = normalizeCSS(css);
+
+      document.getElementById('dynamic-style').innerHTML = css;
+
+      const rootStyles = getComputedStyle(document.documentElement);
+      const preview = document.getElementById('preview');
+      preview.innerHTML = '';
+
+      const variables = Array.from(rootStyles)
+        .filter(v => v.startsWith('--'));
+
+      const sections = {
+        colors: [],
+        fontSizes: [],
+        radius: [],
+        spacing: [],
+        others: []
+      };
+
+      variables.forEach(v => {
+        if (v.includes('color')) sections.colors.push(v);
+        else if (v.includes('text')) sections.fontSizes.push(v);
+        else if (v.includes('radius')) sections.radius.push(v);
+        else if (v.includes('space') || v.includes('spacing')) sections.spacing.push(v);
+        else sections.others.push(v);
+      });
+
+      function createSection(title, items, renderer) {
+        if (!items.length) return;
+
+        const container = document.createElement('div');
+        container.innerHTML = `<h2 class="text-xl font-semibold mb-4">${title}</h2>`;
+
+        const grid = document.createElement('div');
+        grid.className = 'grid grid-cols-2 md:grid-cols-3 gap-4';
+
+        items.forEach(v => {
+          const value = rootStyles.getPropertyValue(v).trim();
+          if (!value) return;
+          const el = renderer(v, value);
+          grid.appendChild(el);
+        });
+
+        container.appendChild(grid);
+        preview.appendChild(container);
+      }
+
+      createSection('Colors', sections.colors, (name, value) => {
+        const div = document.createElement('div');
+        div.className = 'p-4 border rounded';
+        div.innerHTML = `
+          <div class="h-12 rounded mb-2 border" style="background:${value}"></div>
+          <div class="text-sm font-mono">${name}</div>
+          <div class="text-xs text-gray-500">${value}</div>
+        `;
+        return div;
+      });
+
+      createSection('Font Sizes', sections.fontSizes, (name, value) => {
+        const div = document.createElement('div');
+        div.className = 'p-4 border rounded';
+        div.innerHTML = `
+          <div style="font-size:${value}">Sample Text Aa Bb Cc</div>
+          <div class="text-sm font-mono mt-2">${name}</div>
+          <div class="text-xs text-gray-500">${value}</div>
+        `;
+        return div;
+      });
+
+      createSection('Border Radius', sections.radius, (name, value) => {
+        const div = document.createElement('div');
+        div.className = 'p-4 border rounded';
+        div.innerHTML = `
+          <div class="w-16 h-16 bg-black mb-2" style="border-radius:${value}"></div>
+          <div class="text-sm font-mono">${name}</div>
+          <div class="text-xs text-gray-500">${value}</div>
+        `;
+        return div;
+      });
+
+      createSection('Spacing', sections.spacing, (name, value) => {
+        const div = document.createElement('div');
+        div.className = 'p-4 border rounded';
+        div.innerHTML = `
+          <div class="bg-black mb-2" style="height:${value}; width:${value}"></div>
+          <div class="text-sm font-mono">${name}</div>
+          <div class="text-xs text-gray-500">${value}</div>
+        `;
+        return div;
+      });
+
+      createSection('Other Tokens', sections.others, (name, value) => {
+        const div = document.createElement('div');
+        div.className = 'p-4 border rounded';
+        div.innerHTML = `
+          <div class="text-sm font-mono">${name}</div>
+          <div class="text-xs text-gray-500">${value}</div>
+        `;
+        return div;
+      });
+    }
+  </script>
+</body>
+</html>

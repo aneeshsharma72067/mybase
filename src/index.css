@@ -1,0 +1,87 @@
+@import url('https://fonts.googleapis.com/css2?family=Epilogue:wght@400;600;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import 'tailwindcss';
+
+@theme {
+	/* Typography */
+	--font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+	--font-display: 'Epilogue', 'Manrope', ui-sans-serif, system-ui, sans-serif;
+
+	--text-display-lg: 3rem;
+	--text-headline-md: 1.5rem;
+	--text-body-md: 1rem;
+	--text-label-sm: 0.875rem;
+
+	--leading-display-lg: 1.1;
+	--leading-headline-md: 1.25;
+	--leading-body-md: 1.5;
+	--leading-label-sm: 1.4;
+
+	/* Radius */
+	--radius-sm: 0.375rem;
+	--radius-md: 0.5rem;
+	--radius-lg: 0.75rem;
+	--radius-xl: 1rem;
+	--radius-full: 9999px;
+
+	/* 4px base spacing scale */
+	--spacing: 0.25rem;
+
+	/* Semantic color tokens from Stitch */
+	--color-background: #f9faf6;
+	--color-on-background: #2e3430;
+
+	--color-surface: #f9faf6;
+	--color-surface-dim: #d6dbd5;
+	--color-surface-bright: #f9faf6;
+	--color-surface-container-lowest: #ffffff;
+	--color-surface-container-low: #f2f4ef;
+	--color-surface-container: #ebefe9;
+	--color-surface-container-high: #e5e9e4;
+	--color-surface-container-highest: #dfe4de;
+	--color-on-surface: #2e3430;
+	--color-on-surface-variant: #5b605c;
+	--color-outline: #767c77;
+	--color-outline-variant: #aeb3ae;
+
+	--color-primary: #3f6754;
+	--color-primary-dim: #335b48;
+	--color-primary-container: #c1ecd4;
+	--color-on-primary: #e6ffef;
+	--color-on-primary-container: #325947;
+
+	--color-secondary: #40665d;
+	--color-secondary-dim: #345a51;
+	--color-secondary-container: #c2ebe0;
+	--color-on-secondary: #e3fff6;
+	--color-on-secondary-container: #335950;
+
+	--color-tertiary: #2c6a4e;
+	--color-tertiary-dim: #1e5e43;
+	--color-tertiary-container: #b5f6d2;
+	--color-on-tertiary: #e6ffee;
+	--color-on-tertiary-container: #216045;
+
+	--color-error: #a83836;
+	--color-error-container: #fa746f;
+	--color-on-error: #fff7f6;
+	--color-on-error-container: #6e0a12;
+}
+
+:root {
+	color: var(--color-on-background);
+	background-color: var(--color-background);
+
+	/* Token aliases for non-Tailwind CSS usage */
+	--token-shadow-ambient: 0 24px 48px rgb(51 91 72 / 0.06);
+	--token-space-1: 0.25rem;
+	--token-space-2: 0.5rem;
+	--token-space-3: 0.75rem;
+	--token-space-4: 1rem;
+	--token-space-6: 1.5rem;
+	--token-space-8: 2rem;
+	--token-space-12: 3rem;
+}
+
+body {
+	@apply bg-background text-on-background font-sans;
+}
