@@ -2,7 +2,8 @@ import { X } from 'lucide-react'
 import type { DraftTransaction } from './income.helpers'
 
 interface TransactionComposerModalProps {
-  isOpen: boolean
+  isMounted: boolean
+  isVisible: boolean
   draft: DraftTransaction
   categories: string[]
   onDraftChange: (field: keyof DraftTransaction, value: string) => void
@@ -11,20 +12,33 @@ interface TransactionComposerModalProps {
 }
 
 export function TransactionComposerModal({
-  isOpen,
+  isMounted,
+  isVisible,
   draft,
   categories,
   onDraftChange,
   onClose,
   onSave,
 }: TransactionComposerModalProps) {
-  if (!isOpen) {
+  if (!isMounted) {
     return null
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-lg rounded-[2.5rem] bg-surface-container-lowest p-6 shadow-2xl md:p-8" onClick={(event) => event.stopPropagation()}>
+    <div
+      className={[
+        'fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm transition-opacity duration-200',
+        isVisible ? 'opacity-100' : 'opacity-0',
+      ].join(' ')}
+      onClick={onClose}
+    >
+      <div
+        className={[
+          'w-full max-w-lg rounded-[2.5rem] bg-surface-container-lowest p-6 shadow-2xl transition-all duration-220 md:p-8',
+          isVisible ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-4 scale-95 opacity-0',
+        ].join(' ')}
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="mb-8 flex items-center justify-between gap-4">
           <div>
             <h3 className="font-display text-2xl font-black text-[#1b4332]">Add Transaction</h3>

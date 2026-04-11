@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { AllTransactionsModal } from '../components/income/AllTransactionsModal'
 import { ExpenseBreakdownCard } from '../components/income/ExpenseBreakdownCard'
 import { IncomeHeader } from '../components/income/IncomeHeader'
 import { IncomeSummaryCards } from '../components/income/IncomeSummaryCards'
@@ -19,14 +20,20 @@ import {
 import { useIncomeStore } from '../store/useIncomeStore'
 
 export function IncomePage() {
+  const MODAL_ANIMATION_MS = 220
   const transactions = useIncomeStore((state) => state.transactions)
   const categories = useIncomeStore((state) => state.categories)
   const addTransaction = useIncomeStore((state) => state.addTransaction)
 
   const [searchValue, setSearchValue] = useState('')
-  const [isComposerOpen, setIsComposerOpen] = useState(false)
+  const [isComposerMounted, setIsComposerMounted] = useState(false)
+  const [isComposerVisible, setIsComposerVisible] = useState(false)
+  const [isAllTransactionsMounted, setIsAllTransactionsMounted] = useState(false)
+  const [isAllTransactionsVisible, setIsAllTransactionsVisible] = useState(false)
   const [draft, setDraft] = useState<DraftTransaction>(initialDraftTransaction)
   const hasSeededRef = useRef(false)
+  const composerCloseTimeoutRef = useRef<number | undefined>(undefined)
+  const allTransactionsCloseTimeoutRef = useRef<number | undefined>(undefined)
 
   useEffect(() => {
     if (hasSeededRef.current || transactions.length > 0) {
@@ -36,6 +43,17 @@ export function IncomePage() {
     hasSeededRef.current = true
     createSeedTransactions().forEach((tx) => addTransaction(tx))
   }, [addTransaction, transactions.length])
+
+  useEffect(() => {
+    return () => {
+      if (composerCloseTimeoutRef.current !== undefined) {
+        window.clearTimeout(composerCloseTimeoutRef.current)
+      }
+      if (allTransactionsCloseTimeoutRef.current !== undefined) {
+        window.clearTimeout(allTransactionsCloseTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const filteredTransactions = useMemo(() => {
     const lowered = searchValue.trim().toLowerCase()
@@ -71,7 +89,33 @@ export function IncomePage() {
       ...current,
       ...(type ? { type } : {}),
     }))
-    setIsComposerOpen(true)
+    if (composerCloseTimeoutRef.current !== undefined) {
+      window.clearTimeout(composerCloseTimeoutRef.current)
+    }
+    setIsComposerMounted(true)
+    window.requestAnimationFrame(() => setIsComposerVisible(true))
+  }
+
+  function closeComposer() {
+    setIsComposerVisible(false)
+    composerCloseTimeoutRef.current = window.setTimeout(() => {
+      setIsComposerMounted(false)
+    }, MODAL_ANIMATION_MS)
+  }
+
+  function openAllTransactions() {
+    if (allTransactionsCloseTimeoutRef.current !== undefined) {
+      window.clearTimeout(allTransactionsCloseTimeoutRef.current)
+    }
+    setIsAllTransactionsMounted(true)
+    window.requestAnimationFrame(() => setIsAllTransactionsVisible(true))
+  }
+
+  function closeAllTransactions() {
+    setIsAllTransactionsVisible(false)
+    allTransactionsCloseTimeoutRef.current = window.setTimeout(() => {
+      setIsAllTransactionsMounted(false)
+    }, MODAL_ANIMATION_MS)
   }
 
   function saveTransaction() {
@@ -91,7 +135,7 @@ export function IncomePage() {
     })
 
     setDraft(initialDraftTransaction)
-    setIsComposerOpen(false)
+    closeComposer()
   }
 
   return (
@@ -121,19 +165,31 @@ export function IncomePage() {
           </div>
 
           <div className="space-y-6 lg:col-span-2">
-            <RecentTransactionsTable transactions={sortedTransactions.slice(0, 8)} />
+            <RecentTransactionsTable
+              transactions={sortedTransactions.slice(0, 5)}
+              onViewAll={openAllTransactions}
+              showViewAll={sortedTransactions.length > 5}
+            />
             <IncomeSustainabilityCard />
           </div>
         </div>
       </div>
 
       <TransactionComposerModal
-        isOpen={isComposerOpen}
+        isMounted={isComposerMounted}
+        isVisible={isComposerVisible}
         draft={draft}
         categories={categories}
         onDraftChange={updateDraft}
-        onClose={() => setIsComposerOpen(false)}
+        onClose={closeComposer}
         onSave={saveTransaction}
+      />
+
+      <AllTransactionsModal
+        isMounted={isAllTransactionsMounted}
+        isVisible={isAllTransactionsVisible}
+        transactions={sortedTransactions}
+        onClose={closeAllTransactions}
       />
     </div>
   )

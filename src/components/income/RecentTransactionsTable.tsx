@@ -5,16 +5,20 @@ import { formatCurrency } from './income.helpers'
 
 interface RecentTransactionsTableProps {
   transactions: Transaction[]
+  onViewAll?: () => void
+  showViewAll?: boolean
 }
 
-export function RecentTransactionsTable({ transactions }: RecentTransactionsTableProps) {
+export function RecentTransactionsTable({ transactions, onViewAll, showViewAll = true }: RecentTransactionsTableProps) {
   return (
     <div className="overflow-hidden rounded-3xl bg-surface-container-lowest">
-      <div className="flex items-center justify-between border-b border-surface-variant px-8 py-6">
+      <div className="flex items-center justify-between border-b border-outline-variant/25 px-8 py-6">
         <h4 className="font-display text-xl font-bold text-on-surface">Recent Transactions</h4>
-        <button type="button" className="inline-flex items-center gap-1 text-sm font-bold text-primary hover:underline">
-          View Statement <ExternalLink size={14} />
-        </button>
+        {showViewAll ? (
+          <button type="button" onClick={onViewAll} className="inline-flex items-center gap-1 text-sm font-bold text-primary hover:underline">
+            View All <ExternalLink size={14} />
+          </button>
+        ) : null}
       </div>
 
       <div className="overflow-x-auto">
@@ -28,7 +32,7 @@ export function RecentTransactionsTable({ transactions }: RecentTransactionsTabl
               <th className="px-8 py-4 text-right">Amount</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-surface-variant">
+          <tbody className="divide-y divide-outline-variant/20">
             {transactions.map((tx) => (
               <tr key={tx.id} className="transition-colors hover:bg-surface-container-lowest">
                 <td className="px-8 py-5 text-sm text-on-surface-variant">{formatDate(tx.date, 'MMM dd, yyyy')}</td>
