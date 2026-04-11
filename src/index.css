@@ -134,3 +134,15 @@ body {
 	animation: bookmarks-backdrop-enter 220ms ease-out;
 	will-change: opacity;
 }
+
+:root[data-ui-radius='smooth'] .settings-surface {
+	border-radius: var(--radius-xl);
+}
+
+:root[data-ui-radius='sharp'] .settings-surface {
+	border-radius: var(--radius-md);
+}
+
+.settings-surface {
+	transition: border-radius 220ms ease;
+}

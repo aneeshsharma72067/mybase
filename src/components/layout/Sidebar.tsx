@@ -6,17 +6,19 @@ import {
   ListTodo,
   Lock,
   Brain,
+  Settings,
 } from 'lucide-react'
 import { SidebarLink } from './SidebarLink'
 
 const topLinks = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/thoughts', label: 'Thoughts', icon: Brain },
   { to: '/goals', label: 'Goals', icon: Goal },
   { to: '/todos', label: 'Todo List', icon: ListTodo },
   { to: '/bookmarks', label: 'Bookmarks', icon: BookMarked },
   { to: '/passwords', label: 'Passwords', icon: Lock },
   { to: '/income', label: 'Income', icon: CircleDollarSign },
+  { to: '/settings', label: 'Settings', icon: Settings },
 ] as const
 
 export function Sidebar() {

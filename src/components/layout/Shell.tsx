@@ -6,12 +6,14 @@ import { Sidebar } from './Sidebar'
 
 const moduleByPath: Record<string, string> = {
   '/': 'dashboard',
+  '/dashboard': 'dashboard',
   '/thoughts': 'thoughts',
   '/goals': 'goals',
   '/todos': 'todos',
   '/bookmarks': 'bookmarks',
   '/passwords': 'passwords',
   '/income': 'income',
+  '/settings': 'settings',
 }
 
 export function Shell() {
