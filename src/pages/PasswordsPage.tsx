@@ -317,11 +317,11 @@ export function PasswordsPage() {
         onToggleMasterPasswordInput={() => setShowMasterPasswordInput((value) => !value)}
       />
 
-      {strengthSummary.weak > 0 && vaultState === 'unlocked' ? (
+      {strengthSummary.weak > 0 && vaultState === 'unlocked' && (
         <div className="fixed bottom-6 right-6 z-30 inline-flex items-center gap-2 rounded-full bg-error-container px-4 py-2 text-xs font-bold text-error shadow-lg">
           <ShieldAlert size={14} /> {strengthSummary.weak} weak credentials detected
         </div>
-      ) : null}
+      )}
     </div>
   )
 }
