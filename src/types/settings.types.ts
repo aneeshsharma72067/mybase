@@ -1,5 +1,5 @@
 export type SettingsThemeMode = 'light' | 'dark' | 'auto'
-export type SettingsAccent = 'primary' | 'secondary' | 'tertiary'
+export type SettingsAccent = 'primary' | 'secondary' | 'tertiary' | 'orange' | 'blue'
 export type SettingsBorderStyle = 'smooth' | 'sharp'
 export type SettingsLandingPage =
   | 'dashboard'

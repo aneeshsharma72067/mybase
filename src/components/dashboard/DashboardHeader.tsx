@@ -1,6 +1,7 @@
 import { Bell, FolderArchive, Settings2 } from 'lucide-react'
 
 interface DashboardHeaderProps {
+  displayName: string
   statusMessage: string
   onOpenSettings: () => void
   onOpenArchive: () => void
@@ -8,6 +9,7 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({
+  displayName,
   statusMessage,
   onOpenSettings,
   onOpenArchive,
@@ -17,7 +19,7 @@ export function DashboardHeader({
     <header className="mb-8 flex flex-wrap items-center justify-between gap-4 lg:mb-10">
       <div>
         <h1 className="font-display text-3xl font-black tracking-tight text-primary lg:text-5xl">
-          Good Morning, Alex
+          Good Morning, {displayName}
         </h1>
         <p className="mt-1 text-sm font-medium text-on-surface-variant lg:text-base">
           Today is a fresh canvas. Stay grounded.

@@ -18,7 +18,7 @@ export function ThoughtHeroCard({
   onShare,
 }: ThoughtHeroCardProps) {
   return (
-    <article className="relative min-h-[420px] overflow-hidden rounded-xl p-8 lg:p-12">
+    <article className="relative min-h-105 overflow-hidden rounded-xl p-8 lg:p-12">
       <img src={backgroundImage} alt="Forest scene" className="absolute inset-0 h-full w-full object-cover" />
       <div className="absolute inset-0 bg-linear-to-t from-primary-dim/90 via-primary-dim/40 to-transparent" />
 

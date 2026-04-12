@@ -1,6 +1,6 @@
 interface ThoughtCloudCardProps {
   tags: string[]
-  activeTag: string
+  activeTag: string | null
   onTagChange: (tag: string) => void
 }
 

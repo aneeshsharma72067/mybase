@@ -1,35 +1,100 @@
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 import { persist } from 'zustand/middleware'
+import { format } from 'date-fns'
+import { v4 as uuidv4 } from 'uuid'
 import { createZustandStorage } from '../lib/storage'
-import { generateId } from '../lib/utils'
-import type { Thought, ThoughtStoreState, ThoughtTag } from '../types/thought.types'
+import type { Thought, ThoughtStoreState } from '../types/thought.types'
 
 type ThoughtsStoreActions = {
-  addThought: (body: string, tags: ThoughtTag[]) => void
+  addThought: (payload: Omit<Thought, 'id' | 'createdAt' | 'updatedAt'>) => void
   updateThought: (id: string, patch: Partial<Thought>) => void
   deleteThought: (id: string) => void
   togglePin: (id: string) => void
+  setActiveThought: (id: string | null) => void
 }
 
 export type ThoughtsStore = ThoughtStoreState & ThoughtsStoreActions
 
+const seedThoughts: Thought[] = [
+  {
+    id: 't-forest-walk',
+    type: 'braindump',
+    title: 'The quiet power of a morning walk in the misty pines.',
+    body: 'Finding clarity is less about forcing insights and more about allowing space for them to emerge naturally.',
+    tags: ['Meditation', 'Health'],
+    createdAt: '2026-03-30T08:15:00.000Z',
+    updatedAt: '2026-03-30T08:15:00.000Z',
+    isPinned: true,
+    isDraft: false,
+  },
+  {
+    id: 't-minimalism',
+    type: 'braindump',
+    title: 'Digital Minimalism Strategy',
+    body: 'Curating my workspace to include fewer digital interruptions has increased focus depth and reduced daily context switching.',
+    tags: ['Productivity', 'Work'],
+    createdAt: '2026-04-03T18:25:00.000Z',
+    updatedAt: '2026-04-05T07:40:00.000Z',
+    isPinned: false,
+    isDraft: false,
+  },
+  {
+    id: 't-mantra',
+    type: 'quote',
+    quoteText: 'The forest is a social network, but one that actually nourishes the soul.',
+    attribution: 'Weekly Mantra',
+    tags: ['Philosophy', 'Meditation'],
+    createdAt: '2026-04-07T09:10:00.000Z',
+    updatedAt: '2026-04-07T09:10:00.000Z',
+    isPinned: false,
+  },
+  {
+    id: 't-ideas-draft',
+    type: 'braindump',
+    title: 'Content Series Ideas',
+    body: '',
+    tags: ['Creative Flow', 'Future Plans'],
+    createdAt: '2026-04-10T21:00:00.000Z',
+    updatedAt: '2026-04-10T21:00:00.000Z',
+    isPinned: false,
+    isDraft: true,
+  },
+]
+
+function normalizeTitleForAdd(payload: Omit<Thought, 'id' | 'createdAt' | 'updatedAt'>): string | undefined {
+  if (payload.type !== 'braindump') {
+    return payload.title
+  }
+
+  const normalized = payload.title?.trim() ?? ''
+
+  if (normalized.length > 0) {
+    return normalized
+  }
+
+  return `Brain Dump on ${format(new Date(), 'MMM d, yyyy')}`
+}
+
 const initialState: ThoughtStoreState = {
-  thoughts: [],
+  thoughts: seedThoughts,
+  activeThoughtId: null,
 }
 
 export const useThoughtsStore = create<ThoughtsStore>()(
   persist(
     immer((set) => ({
       ...initialState,
-      addThought: (body, tags) => {
+      addThought: (payload) => {
         set((state) => {
+          const now = new Date().toISOString()
+
           state.thoughts.push({
-            id: generateId(),
-            body,
-            tags,
-            createdAt: new Date().toISOString(),
-            pinned: false,
+            ...payload,
+            title: normalizeTitleForAdd(payload),
+            id: uuidv4(),
+            createdAt: now,
+            updatedAt: now,
           })
         })
       },
@@ -39,12 +104,17 @@ export const useThoughtsStore = create<ThoughtsStore>()(
 
           if (thought) {
             Object.assign(thought, patch)
+            thought.updatedAt = new Date().toISOString()
           }
         })
       },
       deleteThought: (id) => {
         set((state) => {
           state.thoughts = state.thoughts.filter((thought) => thought.id !== id)
+
+          if (state.activeThoughtId === id) {
+            state.activeThoughtId = null
+          }
         })
       },
       togglePin: (id) => {
@@ -52,25 +122,40 @@ export const useThoughtsStore = create<ThoughtsStore>()(
           const thought = state.thoughts.find((item) => item.id === id)
 
           if (thought) {
-            thought.pinned = !thought.pinned
+            thought.isPinned = !thought.isPinned
+            thought.updatedAt = new Date().toISOString()
           }
+        })
+      },
+      setActiveThought: (id) => {
+        set((state) => {
+          state.activeThoughtId = id
         })
       },
     })),
     {
       name: 'mybase-thoughts',
       storage: createZustandStorage(),
-      partialize: (state) => ({ thoughts: state.thoughts }),
+      partialize: (state) => ({
+        thoughts: state.thoughts,
+        activeThoughtId: state.activeThoughtId,
+      }),
     },
   ),
 )
 
-export function getByTag(tag: ThoughtTag): Thought[] {
-  return useThoughtsStore
-    .getState()
-    .thoughts.filter((thought) => thought.tags.includes(tag))
+export function getPinnedThoughts(thoughts: Thought[]): Thought[] {
+  return thoughts.filter((thought) => thought.isPinned)
 }
 
-export function getPinned(): Thought[] {
-  return useThoughtsStore.getState().thoughts.filter((thought) => thought.pinned)
+export function getThoughtsByTag(thoughts: Thought[], tag: string): Thought[] {
+  return thoughts.filter((thought) => thought.tags.includes(tag))
+}
+
+export function getAllTags(thoughts: Thought[]): string[] {
+  return Array.from(new Set(thoughts.flatMap((thought) => thought.tags))).sort((a, b) => a.localeCompare(b))
+}
+
+export function getDraftThoughts(thoughts: Thought[]): Thought[] {
+  return thoughts.filter((thought) => thought.type === 'braindump' && thought.isDraft)
 }

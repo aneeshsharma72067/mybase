@@ -1,13 +1,26 @@
-export type ThoughtTag = 'idea' | 'work' | 'personal' | 'random'
+export type ThoughtType = 'braindump' | 'quote'
 
 export interface Thought {
   id: string
-  body: string
-  tags: ThoughtTag[]
-  createdAt: string
-  pinned: boolean
+  type: ThoughtType
+
+  // braindump fields
+  title?: string // if empty, default to "Brain Dump on {date}" at save time
+  body?: string
+  isDraft?: boolean // true if saved with a title but no body
+
+  // quote fields
+  quoteText?: string
+  attribution?: string // who said it - could be empty
+
+  // shared
+  tags: string[]
+  createdAt: string // ISO string
+  updatedAt: string
+  isPinned: boolean
 }
 
 export interface ThoughtStoreState {
   thoughts: Thought[]
+  activeThoughtId: string | null
 }

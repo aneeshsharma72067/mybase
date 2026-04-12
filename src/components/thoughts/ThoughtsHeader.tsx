@@ -1,8 +1,9 @@
-import { Bell, Search, Settings2, UserCircle2 } from 'lucide-react'
+import { Bell, Plus, Search, Settings2, UserCircle2 } from 'lucide-react'
 
 interface ThoughtsHeaderProps {
   searchValue: string
   onSearchValueChange: (value: string) => void
+  onCreateThought: () => void
   onOpenArchive: () => void
   onOpenSettings: () => void
   onOpenNotifications: () => void
@@ -12,6 +13,7 @@ interface ThoughtsHeaderProps {
 export function ThoughtsHeader({
   searchValue,
   onSearchValueChange,
+  onCreateThought,
   onOpenArchive,
   onOpenSettings,
   onOpenNotifications,
@@ -44,6 +46,14 @@ export function ThoughtsHeader({
           className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-3 py-2 text-xs font-semibold hover:bg-surface-container"
         >
           Archive
+        </button>
+        <button
+          type="button"
+          onClick={onCreateThought}
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-bold text-on-primary hover:bg-primary-dim"
+        >
+          <Plus size={14} />
+          <span>New Thought</span>
         </button>
         <button
           type="button"

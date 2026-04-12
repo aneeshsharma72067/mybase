@@ -9,6 +9,7 @@ import { TeaserCard } from '../components/dashboard/TeaserCard'
 import { ThoughtDumpCard } from '../components/dashboard/ThoughtDumpCard'
 import { TodosCard } from '../components/dashboard/TodosCard'
 import { generateId } from '../lib/utils'
+import { useSettingsStore } from '../store/useSettingsStore'
 
 const todoItems = [
   { id: '1', label: 'Design system review', done: false },
@@ -32,6 +33,7 @@ const goalProgress = [
 
 export function DashboardPage() {
   const navigate = useNavigate()
+  const displayName = useSettingsStore((state) => state.settings.displayName)
   const [actionMessage, setActionMessage] = useState('Dashboard ready')
   const [dashboardTodos, setDashboardTodos] = useState(todoItems)
 
@@ -54,6 +56,7 @@ export function DashboardPage() {
   return (
     <div className="mx-auto w-full max-w-400">
       <DashboardHeader
+        displayName={displayName}
         statusMessage={actionMessage}
         onOpenSettings={() => updateMessage('Settings panel requested')}
         onOpenArchive={() => updateMessage('Archive opened')}

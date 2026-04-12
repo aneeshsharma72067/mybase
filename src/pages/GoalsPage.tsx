@@ -231,7 +231,7 @@ export function GoalsPage() {
         key={viewMode}
         className={[
           'goals-layout-enter grid gap-6',
-          viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'mx-auto grid-cols-1 xl:max-w-5xl',
+          viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'mx-auto grid-cols-1',
         ].join(' ')}
       >
         {viewMode === 'grid' ? (

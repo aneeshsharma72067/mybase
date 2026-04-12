@@ -3,13 +3,16 @@ import { useEffect, useMemo, useState } from 'react'
 import { SettingsHeader } from '../components/settings/SettingsHeader'
 import { SettingsSection } from '../components/settings/SettingsSection'
 import { SettingsSwitchRow } from '../components/settings/SettingsSwitchRow'
+import { applyAccent, applyBorderStyle, applyTheme } from '../lib/settingsAppearance'
 import { useSettingsStore } from '../store/useSettingsStore'
-import type { SettingsAccent, SettingsBorderStyle, SettingsLandingPage, SettingsThemeMode, UserSettings } from '../types/settings.types'
+import type { SettingsAccent, SettingsBorderStyle, SettingsLandingPage, UserSettings } from '../types/settings.types'
 
-const accentMap: Record<SettingsAccent, { label: string; swatch: string }> = {
-  primary: { label: 'Forest Green', swatch: 'bg-primary' },
-  secondary: { label: 'Earthy Teal', swatch: 'bg-secondary' },
-  tertiary: { label: 'Soft Botanical', swatch: 'bg-tertiary' },
+const accentMap: Record<SettingsAccent, { label: string; color: string }> = {
+  primary: { label: 'Forest Green', color: '#3f6754' },
+  secondary: { label: 'Earthy Teal', color: '#40665d' },
+  tertiary: { label: 'Soft Botanical', color: '#2c6a4e' },
+  orange: { label: 'Warm Orange', color: '#b76a2d' },
+  blue: { label: 'Calm Blue', color: '#2f5fa8' },
 }
 
 const landingOptions: Array<{ value: SettingsLandingPage; label: string }> = [
@@ -30,59 +33,6 @@ const autoLockOptions: Array<{ label: string; value: UserSettings['autoLockMinut
   { label: 'Never', value: 0 },
 ]
 
-function applyTheme(mode: SettingsThemeMode) {
-  if (typeof window === 'undefined') {
-    return
-  }
-
-  const root = document.documentElement
-
-  if (mode === 'light') {
-    root.classList.remove('dark')
-    return
-  }
-
-  if (mode === 'dark') {
-    root.classList.add('dark')
-    return
-  }
-
-  const media = window.matchMedia('(prefers-color-scheme: dark)')
-  root.classList.toggle('dark', media.matches)
-}
-
-function applyAccent(accent: SettingsAccent) {
-  if (typeof window === 'undefined') {
-    return
-  }
-
-  const root = document.documentElement
-
-  if (accent === 'primary') {
-    root.style.setProperty('--color-primary', '#3f6754')
-    root.style.setProperty('--color-primary-dim', '#335b48')
-    root.style.setProperty('--color-primary-container', '#c1ecd4')
-    root.style.setProperty('--color-on-primary', '#e6ffef')
-    root.style.setProperty('--color-on-primary-container', '#325947')
-    return
-  }
-
-  if (accent === 'secondary') {
-    root.style.setProperty('--color-primary', 'var(--color-secondary)')
-    root.style.setProperty('--color-primary-dim', 'var(--color-secondary-dim)')
-    root.style.setProperty('--color-primary-container', 'var(--color-secondary-container)')
-    root.style.setProperty('--color-on-primary', 'var(--color-on-secondary)')
-    root.style.setProperty('--color-on-primary-container', 'var(--color-on-secondary-container)')
-    return
-  }
-
-  root.style.setProperty('--color-primary', 'var(--color-tertiary)')
-  root.style.setProperty('--color-primary-dim', 'var(--color-tertiary-dim)')
-  root.style.setProperty('--color-primary-container', 'var(--color-tertiary-container)')
-  root.style.setProperty('--color-on-primary', 'var(--color-on-tertiary)')
-  root.style.setProperty('--color-on-primary-container', 'var(--color-on-tertiary-container)')
-}
-
 export function SettingsPage() {
   const savedSettings = useSettingsStore((state) => state.settings)
   const setSettings = useSettingsStore((state) => state.setSettings)
@@ -96,8 +46,14 @@ export function SettingsPage() {
   useEffect(() => {
     applyTheme(savedSettings.themeMode)
     applyAccent(savedSettings.accent)
-    document.documentElement.dataset.uiRadius = savedSettings.borderStyle
+    applyBorderStyle(savedSettings.borderStyle)
   }, [savedSettings])
+
+  useEffect(() => {
+    applyTheme(draft.themeMode)
+    applyAccent(draft.accent)
+    applyBorderStyle(draft.borderStyle)
+  }, [draft.accent, draft.borderStyle, draft.themeMode])
 
   useEffect(() => {
     if (draft.themeMode !== 'auto') {
@@ -210,9 +166,9 @@ export function SettingsPage() {
                     <span
                       className={[
                         'inline-flex h-10 w-10 items-center justify-center rounded-full text-on-primary transition-all',
-                        accentMap[accent].swatch,
                         draft.accent === accent ? 'ring-4 ring-primary/20' : '',
                       ].join(' ')}
+                      style={{ backgroundColor: accentMap[accent].color }}
                     >
                       {draft.accent === accent ? '✓' : ''}
                     </span>
@@ -277,7 +233,7 @@ export function SettingsPage() {
         <SettingsSection title="Security" icon={Shield} tone="error">
           <div className="space-y-8">
             <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="min-w-[200px] flex-1">
+              <div className="flex-1">
                 <p className="font-bold text-on-surface">Master Password</p>
                 <p className="text-sm text-on-surface-variant">Update the key that protects your private data.</p>
               </div>
@@ -292,7 +248,7 @@ export function SettingsPage() {
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-4 border-t border-outline-variant/20 pt-6">
-              <div className="min-w-[200px] flex-1">
+              <div className="flex-1">
                 <p className="font-bold text-on-surface">Auto-lock vault</p>
                 <p className="text-sm text-on-surface-variant">Automatically secure your base after inactivity.</p>
               </div>
