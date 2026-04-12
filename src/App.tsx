@@ -25,7 +25,9 @@ const router = createBrowserRouter([
       { path: 'settings', element: <SettingsPage /> },
     ],
   },
-])
+], {
+  basename: '/mybase',
+})
 
 export default function App() {
   return <RouterProvider router={router} />
