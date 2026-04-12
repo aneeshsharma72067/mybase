@@ -1,7 +1,9 @@
 import type { LucideIcon } from 'lucide-react'
 import { MoreVertical } from 'lucide-react'
+import { useGoalsStore } from '../../store/useGoalsStore'
 
 interface GoalListRowProps {
+  id: string
   icon: LucideIcon
   title: string
   category: string
@@ -16,6 +18,7 @@ interface GoalListRowProps {
 }
 
 export function GoalListRow({
+  id,
   icon: Icon,
   title,
   category,
@@ -28,6 +31,8 @@ export function GoalListRow({
   status,
   statusTone,
 }: GoalListRowProps) {
+  const setActiveGoal = useGoalsStore((state) => state.setActiveGoal)
+
   const iconToneClass =
     categoryTone === 'secondary'
       ? 'bg-secondary-container/30 text-secondary'
@@ -98,8 +103,12 @@ export function GoalListRow({
       <td className="px-8 py-6 text-right">
         <button
           type="button"
+          onClick={(event) => {
+            event.stopPropagation()
+            setActiveGoal(id)
+          }}
           className="rounded-full p-2 text-on-surface-variant opacity-0 transition-opacity hover:bg-surface-container-high group-hover:opacity-100"
-          aria-label={`Open actions for ${title}`}
+          aria-label={`Open details for ${title}`}
         >
           <MoreVertical size={16} />
         </button>

@@ -1,6 +1,9 @@
-import { BookOpen, Dumbbell, Grid2x2, LayoutList, Palette } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { BookOpen, Dumbbell, Grid2x2, LayoutList, Palette, Sparkles } from 'lucide-react'
+import { differenceInCalendarDays, format } from 'date-fns'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ActiveQuestCard } from '../components/goals/ActiveQuestCard'
+import { AddGoalModal } from '../components/goals/AddGoalModal'
+import { GoalDetailsDrawer } from '../components/goals/GoalDetailsDrawer'
 import { GoalImageCard } from '../components/goals/GoalImageCard'
 import { GoalProgressCard } from '../components/goals/GoalProgressCard'
 import { GoalsHeader } from '../components/goals/GoalsHeader'
@@ -8,165 +11,199 @@ import { GoalsListView, type GoalListItem } from '../components/goals/GoalsListV
 import { GoalsQuoteCard } from '../components/goals/GoalsQuoteCard'
 import { MomentumOverviewCard } from '../components/goals/MomentumOverviewCard'
 import { NewGoalCard } from '../components/goals/NewGoalCard'
+import { getActiveGoals, getFocusedGoal, getGoalProgress, getMomentumData, useGoalsStore } from '../store/useGoalsStore'
+import type { Goal } from '../types/goal.types'
 
 const forestImage =
   'https://lh3.googleusercontent.com/aida-public/AB6AXuCEbiR53ikqYMZvt8bg4_bMDkpfUohpaj1ydpes9HWNg20KqMBR7YMOgQ3a2ZY1G7MfqiZF5-ATqLEKTDq53Vph9moMEg84oXkGvPsYNskV3eT77oHWkhIKLh1fSZFVdZa114Ria3t-5snqkomHAIj4cp0mLw8XvYg4Y1k4IM2K_XhP6Ifdq0qXfXwrLX9eZl_xz-bElIK2xxUF7VgKAdsur3d2iAoL4hcQECoQ9Rd5dMbQkEW6437Rl-jEOPQECrhh57brXa94Xl0'
 
 type ViewMode = 'grid' | 'list'
 
-type GoalCardSeed = {
-  id: string
-  title: string
-  description: string
-  label: string
-  value: string
-  progress: number
-  progressLabel: string
-  category: string
-  categoryTone: 'primary' | 'secondary' | 'tertiary'
-  deadline: string
-  deadlineHint: string
-  deadlineTone: 'primary' | 'error' | 'muted'
-  status: string
-  statusTone: 'primary' | 'secondary' | 'muted'
-  accent: 'primary' | 'secondary' | 'tertiary'
-  icon: typeof Palette
+function getGoalIcon(goal: Goal) {
+  const category = goal.category?.toLowerCase() ?? ''
+
+  if (goal.type === 'numeric' || category.includes('health')) {
+    return Dumbbell
+  }
+
+  if (category.includes('growth')) {
+    return BookOpen
+  }
+
+  if (category.includes('personal')) {
+    return Sparkles
+  }
+
+  return Palette
 }
 
-const seededGoals: GoalCardSeed[] = [
-  {
-    id: 'portfolio',
-    title: 'Design Portfolio 2024',
-    description: 'Refresh visual language and add 5 case studies focused on organic UI patterns.',
-    label: 'Remaining',
-    value: '14 days',
-    progress: 92,
-    progressLabel: 'Final Polish',
-    category: 'Professional',
-    categoryTone: 'primary',
-    deadline: 'Aug 12, 2024',
-    deadlineHint: '14 Days left',
-    deadlineTone: 'error',
-    status: 'Near Completion',
-    statusTone: 'secondary',
-    accent: 'secondary',
-    icon: Palette,
-  },
-  {
-    id: 'reading',
-    title: 'Reading Marathon',
-    description: 'Complete 12 books on behavioral psychology and environmental philosophy.',
-    label: 'Completed',
-    value: '4/12',
-    progress: 33,
-    progressLabel: '4 of 12 books',
-    category: 'Growth',
-    categoryTone: 'tertiary',
-    deadline: 'Dec 31, 2024',
-    deadlineHint: 'End of year',
-    deadlineTone: 'muted',
-    status: 'On Track',
-    statusTone: 'muted',
-    accent: 'tertiary',
-    icon: BookOpen,
-  },
-  {
-    id: 'marathon',
-    title: 'Mountain Marathon',
-    description: 'Training for the Dolomites Vertical Run in late autumn with weekly intervals.',
-    label: 'Weekly Stat',
-    value: '42km done',
-    progress: 65,
-    progressLabel: '42km / week',
-    category: 'Health',
-    categoryTone: 'secondary',
-    deadline: 'Sep 20, 2024',
-    deadlineHint: '6 weeks away',
-    deadlineTone: 'primary',
-    status: 'Active Training',
-    statusTone: 'primary',
-    accent: 'primary',
-    icon: Dumbbell,
-  },
-]
+function getGoalAccent(goal: Goal): 'primary' | 'secondary' | 'tertiary' {
+  const category = goal.category?.toLowerCase() ?? ''
 
-const wildernessGoal: GoalListItem = {
-  id: 'wilderness',
-  icon: Dumbbell,
-  title: 'Wilderness Solo Trip',
-  category: 'Personal',
-  categoryTone: 'secondary',
-  progress: 45,
-  progressLabel: 'Stage 3 of 7',
-  deadline: 'Oct 24, 2024',
-  deadlineHint: 'In 2 months',
-  deadlineTone: 'primary',
-  status: 'In Progress',
-  statusTone: 'primary',
+  if (goal.type === 'numeric' || category.includes('professional')) {
+    return 'primary'
+  }
+
+  if (category.includes('growth')) {
+    return 'tertiary'
+  }
+
+  return 'secondary'
+}
+
+function getCategoryTone(goal: Goal): 'primary' | 'secondary' | 'tertiary' {
+  return getGoalAccent(goal)
+}
+
+function getStatusTone(goal: Goal): 'primary' | 'secondary' | 'muted' {
+  if (goal.status === 'completed') {
+    return 'secondary'
+  }
+
+  if (goal.status === 'paused' || goal.status === 'archived') {
+    return 'muted'
+  }
+
+  return 'primary'
+}
+
+function getDeadlineTone(goal: Goal): 'primary' | 'error' | 'muted' {
+  if (!goal.deadline) {
+    return 'muted'
+  }
+
+  const remainingDays = differenceInCalendarDays(new Date(goal.deadline), new Date())
+
+  if (remainingDays <= 3) {
+    return 'error'
+  }
+
+  if (remainingDays <= 10) {
+    return 'primary'
+  }
+
+  return 'muted'
+}
+
+function getDeadlineHint(goal: Goal): string {
+  if (!goal.deadline) {
+    return 'No deadline'
+  }
+
+  const remainingDays = differenceInCalendarDays(new Date(goal.deadline), new Date())
+
+  if (remainingDays < 0) {
+    return 'Overdue'
+  }
+
+  if (remainingDays === 0) {
+    return 'Due today'
+  }
+
+  if (remainingDays === 1) {
+    return '1 day left'
+  }
+
+  return `${remainingDays} days left`
+}
+
+function getProgressLabel(goal: Goal): string {
+  if (goal.type === 'numeric') {
+    return `${goal.current ?? 0} / ${goal.target ?? 0}${goal.unit ? ` ${goal.unit}` : ''}`
+  }
+
+  const completed = goal.milestones.filter((milestone) => milestone.done).length
+  return `${completed} of ${goal.milestones.length} milestones`
+}
+
+function getGoalListItem(goal: Goal): GoalListItem {
+  return {
+    id: goal.id,
+    icon: getGoalIcon(goal),
+    title: goal.title,
+    category: goal.category ?? 'General',
+    categoryTone: getCategoryTone(goal),
+    progress: getGoalProgress(goal),
+    progressLabel: getProgressLabel(goal),
+    deadline: goal.deadline ? format(new Date(goal.deadline), 'MMM d, yyyy') : 'No deadline',
+    deadlineHint: getDeadlineHint(goal),
+    deadlineTone: getDeadlineTone(goal),
+    status: goal.status,
+    statusTone: getStatusTone(goal),
+  }
 }
 
 export function GoalsPage() {
+  const goals = useGoalsStore((state) => state.goals)
+  const activeGoalId = useGoalsStore((state) => state.activeGoalId)
+  const setActiveGoal = useGoalsStore((state) => state.setActiveGoal)
+  const focusedGoal = useMemo(() => getFocusedGoal(goals), [goals])
+  const activeGoals = useMemo(() => getActiveGoals(goals), [goals])
+  const momentum = useMemo(() => getMomentumData(goals), [goals])
   const [searchValue, setSearchValue] = useState('')
-  const [statusText, setStatusText] = useState('3 active goals in focus')
-  const [goalCards, setGoalCards] = useState(seededGoals)
+  const [statusText, setStatusText] = useState('Goals synced')
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
+  const [showAddGoal, setShowAddGoal] = useState(false)
+  const [drawerGoal, setDrawerGoal] = useState<Goal | null>(null)
+  const drawerTimerRef = useRef<number | null>(null)
 
-  const filteredGoalCards = useMemo(() => {
+  const filteredActiveGoals = useMemo(() => {
     const query = searchValue.trim().toLowerCase()
 
     if (!query) {
-      return goalCards
+      return activeGoals
     }
 
-    return goalCards.filter((goal) => goal.title.toLowerCase().includes(query))
-  }, [goalCards, searchValue])
+    return activeGoals.filter((goal) => {
+      const haystack = [goal.title, goal.description, goal.category]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+
+      return haystack.includes(query)
+    })
+  }, [activeGoals, searchValue])
 
   const listViewGoals = useMemo(() => {
-    const mapped = filteredGoalCards.map<GoalListItem>((goal) => ({
-      id: goal.id,
-      icon: goal.icon,
-      title: goal.title,
-      category: goal.category,
-      categoryTone: goal.categoryTone,
-      progress: goal.progress,
-      progressLabel: goal.progressLabel,
-      deadline: goal.deadline,
-      deadlineHint: goal.deadlineHint,
-      deadlineTone: goal.deadlineTone,
-      status: goal.status,
-      statusTone: goal.statusTone,
-    }))
+    return filteredActiveGoals.map<GoalListItem>(getGoalListItem)
+  }, [filteredActiveGoals])
 
-    if (!searchValue.trim() || wildernessGoal.title.toLowerCase().includes(searchValue.trim().toLowerCase())) {
-      return [wildernessGoal, ...mapped]
+  const momentumTotal = useMemo(() => momentum.reduce((sum, entry) => sum + entry.count, 0), [momentum])
+  const momentumNote =
+    momentumTotal === 0
+      ? 'No activity logged this week.'
+      : momentumTotal < 5
+        ? `${momentumTotal} milestones completed this week.`
+        : `${momentumTotal} milestones completed. Strong week.`
+
+  const showFeatureCards = activeGoals.length > 0
+
+  useEffect(() => {
+    if (drawerTimerRef.current !== null) {
+      window.clearTimeout(drawerTimerRef.current)
+      drawerTimerRef.current = null
     }
 
-    return mapped
-  }, [filteredGoalCards, searchValue])
-
-  function handleCreateGoal() {
-    const nextGoal: GoalCardSeed = {
-      id: `goal-${goalCards.length + 1}`,
-      title: 'New Goal Draft',
-      description: 'Define a measurable target and break it into weekly milestones.',
-      label: 'Remaining',
-      value: '30 days',
-      progress: 10,
-      progressLabel: 'Stage 1 of 6',
-      category: 'Professional',
-      categoryTone: 'primary',
-      deadline: 'Jan 18, 2025',
-      deadlineHint: '4 months away',
-      deadlineTone: 'muted',
-      status: 'Planning',
-      statusTone: 'muted',
-      accent: 'primary',
-      icon: Palette,
+    if (activeGoalId) {
+      const nextGoal = goals.find((goal) => goal.id === activeGoalId) ?? null
+      setDrawerGoal(nextGoal)
+      return
     }
 
-    setGoalCards((current) => [nextGoal, ...current])
-    setStatusText('New vision created')
-  }
+    if (drawerGoal) {
+      drawerTimerRef.current = window.setTimeout(() => {
+        setDrawerGoal(null)
+      }, 200)
+    }
+  }, [activeGoalId, drawerGoal, goals])
+
+  useEffect(() => {
+    return () => {
+      if (drawerTimerRef.current !== null) {
+        window.clearTimeout(drawerTimerRef.current)
+      }
+    }
+  }, [])
 
   return (
     <div className="mx-auto w-full max-w-400">
@@ -182,15 +219,19 @@ export function GoalsPage() {
       />
 
       <section className="mb-8 grid grid-cols-12 gap-6 lg:mb-10">
-        <ActiveQuestCard
-          title="Mastering Sustainable Architecture"
-          progress={78}
-          onDetails={() => setStatusText('Viewing active quest details')}
-        />
-        <MomentumOverviewCard
-          deltas={[60, 85, 40, 95, 75]}
-          note="Your activity increased by 12% this week."
-        />
+        {focusedGoal ? (
+          <ActiveQuestCard
+            title={focusedGoal.title}
+            progress={getGoalProgress(focusedGoal)}
+            onDetails={() => setActiveGoal(focusedGoal.id)}
+          />
+        ) : (
+          <div className="col-span-12 flex h-72 items-center justify-center rounded-xl bg-surface-container-high p-8 text-center text-on-surface-variant lg:col-span-8 lg:h-80 lg:p-10">
+            <p>Pin a goal to set your Active Quest</p>
+          </div>
+        )}
+
+        <MomentumOverviewCard momentum={momentum} note={momentumNote} />
       </section>
 
       <div className="mb-6 flex justify-end md:hidden">
@@ -236,39 +277,39 @@ export function GoalsPage() {
       >
         {viewMode === 'grid' ? (
           <>
-            <GoalImageCard
-              title="Wilderness Solo Trip"
-              category="Personal"
-              stage="Stage 3 of 7: Equipment Prep"
-              progress={45}
-              imageUrl={forestImage}
-            />
-
-            {filteredGoalCards.map((goal) => (
-              <GoalProgressCard
-                key={goal.id}
-                icon={goal.icon}
-                title={goal.title}
-                description={goal.description}
-                label={goal.label}
-                value={goal.value}
-                progress={goal.progress}
-                accent={goal.accent}
+            {showFeatureCards ? (
+              <GoalImageCard
+                title="Wilderness Solo Trip"
+                category="Personal"
+                stage="Stage 3 of 7: Equipment Prep"
+                progress={45}
+                imageUrl={forestImage}
               />
-            ))}
+            ) : null}
 
-            <NewGoalCard onCreate={handleCreateGoal} />
-            <GoalsQuoteCard
-              quote="Nature does not hurry, yet everything is accomplished."
-              author="- Lao Tzu"
-            />
+            {filteredActiveGoals.length > 0 ? (
+              filteredActiveGoals.map((goal) => (
+                <GoalProgressCard key={goal.id} goal={goal} icon={getGoalIcon(goal)} accent={getGoalAccent(goal)} />
+              ))
+            ) : showFeatureCards ? (
+              <div className="flex h-80 items-center justify-center rounded-xl bg-surface-container-lowest p-8 text-center text-on-surface-variant lg:h-96">
+                No active goals match this search.
+              </div>
+            ) : null}
+
+            <NewGoalCard onCreate={() => setShowAddGoal(true)} />
+
+            {showFeatureCards ? <GoalsQuoteCard /> : null}
           </>
         ) : (
           <div className="xl:col-span-3">
-            <GoalsListView goals={listViewGoals} onCreate={handleCreateGoal} />
+            <GoalsListView goals={listViewGoals} onCreate={() => setShowAddGoal(true)} />
           </div>
         )}
       </section>
+
+      {drawerGoal ? <GoalDetailsDrawer goal={drawerGoal} /> : null}
+      <AddGoalModal isOpen={showAddGoal} onClose={() => setShowAddGoal(false)} />
     </div>
   )
 }
