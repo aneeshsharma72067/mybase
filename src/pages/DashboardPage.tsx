@@ -1,5 +1,5 @@
 import { BookMarked, HeartPulse, Leaf, Lock, Timer, Zap } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DashboardHeader } from '../components/dashboard/DashboardHeader'
 import { GoalsProgressCard } from '../components/dashboard/GoalsProgressCard'
@@ -8,48 +8,74 @@ import { QuickStatsGrid } from '../components/dashboard/QuickStatsGrid'
 import { TeaserCard } from '../components/dashboard/TeaserCard'
 import { ThoughtDumpCard } from '../components/dashboard/ThoughtDumpCard'
 import { TodosCard } from '../components/dashboard/TodosCard'
-import { generateId } from '../lib/utils'
+import { getActiveGoals, getGoalProgress, useGoalsStore } from '../store/useGoalsStore'
+import { formatCurrency, getNetSavings, getSavingsRate, getTotalIncome, useIncomeStore } from '../store/useIncomeStore'
+import { getSecurityHealth, usePasswordStore } from '../store/usePasswordStore'
 import { useSettingsStore } from '../store/useSettingsStore'
-
-const todoItems = [
-  { id: '1', label: 'Design system review', done: false },
-  { id: '2', label: 'Morning meditation', done: true },
-  { id: '3', label: 'Update income summary', done: false },
-  { id: '4', label: 'Call the garden center', done: false },
-]
-
-const quickStats = [
-  { label: 'Focus', value: '4.2h', tone: 'secondary' as const },
-  { label: 'Flow States', value: '12', tone: 'primary' as const },
-  { label: 'Health', value: '89%', tone: 'tertiary' as const },
-  { label: 'Energy', value: 'Active', tone: 'error' as const },
-]
-
-const goalProgress = [
-  { name: 'Financial Freedom', progress: 65 },
-  { name: 'Health and Vitality', progress: 42 },
-  { name: 'Digital Detox', progress: 90 },
-]
+import { getPendingTodos, getTodaysTodos, useTodoStore } from '../store/useTodoStore'
+import { useThoughtsStore } from '../store/useThoughtsStore'
+import { useBookmarksStore } from '../store/useBookmarksStore'
+import { getTodayISO } from '../lib/utils'
 
 export function DashboardPage() {
   const navigate = useNavigate()
   const displayName = useSettingsStore((state) => state.settings.displayName)
+  const incomeTransactions = useIncomeStore((state) => state.transactions)
+  const goals = useGoalsStore((state) => state.goals)
+  const todos = useTodoStore((state) => state.todos)
+  const addTodo = useTodoStore((state) => state.addTodo)
+  const toggleTodo = useTodoStore((state) => state.toggleTodo)
+  const thoughts = useThoughtsStore((state) => state.thoughts)
+  const bookmarkCount = useBookmarksStore((state) => state.bookmarks.length)
+  const passwordEntries = usePasswordStore((state) => state.entries)
   const [actionMessage, setActionMessage] = useState('Dashboard ready')
-  const [dashboardTodos, setDashboardTodos] = useState(todoItems)
+
+  const activeGoals = useMemo(() => getActiveGoals(goals), [goals])
+  const todaysTodos = useMemo(() => getTodaysTodos(todos), [todos])
+  const pendingTodos = useMemo(() => getPendingTodos(todos), [todos])
+  const health = useMemo(() => getSecurityHealth(passwordEntries), [passwordEntries])
+  const totalIncome = useMemo(() => getTotalIncome(incomeTransactions), [incomeTransactions])
+  const netSavings = useMemo(() => getNetSavings(incomeTransactions), [incomeTransactions])
+  const savingsRate = useMemo(() => getSavingsRate(incomeTransactions), [incomeTransactions])
+
+  const dashboardTodos = useMemo(
+    () => (todaysTodos.length > 0 ? todaysTodos : pendingTodos).slice(0, 4).map((todo) => ({ id: todo.id, label: todo.title, done: todo.done })),
+    [pendingTodos, todaysTodos],
+  )
+
+  const quickStats = useMemo(
+    () => [
+      { label: 'Focus', value: `${pendingTodos.length}`, tone: 'secondary' as const, icon: Timer },
+      { label: 'Flow States', value: `${thoughts.length}`, tone: 'primary' as const, icon: Leaf },
+      { label: 'Health', value: `${health.percentage}%`, tone: 'tertiary' as const, icon: HeartPulse },
+      { label: 'Energy', value: activeGoals.length > 0 ? 'Active' : 'Idle', tone: 'error' as const, icon: Zap },
+    ],
+    [activeGoals.length, health.percentage, pendingTodos.length, thoughts.length],
+  )
+
+  const goalProgress = useMemo(
+    () => activeGoals.slice(0, 3).map((goal) => ({ name: goal.title, progress: getGoalProgress(goal) })),
+    [activeGoals],
+  )
+
+  const latestThought = useMemo(() => thoughts[0], [thoughts])
 
   function updateMessage(message: string) {
     setActionMessage(message)
   }
 
   function handleToggleTodo(id: string) {
-    setDashboardTodos((current) =>
-      current.map((item) => (item.id === id ? { ...item, done: !item.done } : item)),
-    )
+    toggleTodo(id)
     updateMessage('Todo status updated')
   }
 
   function handleAddTodo(label: string) {
-    setDashboardTodos((current) => [...current, { id: generateId(), label, done: false }])
+    addTodo({
+      title: label,
+      done: false,
+      priority: 'med',
+      dueDate: getTodayISO(),
+    })
     updateMessage('New todo added')
   }
 
@@ -66,43 +92,31 @@ export function DashboardPage() {
       <div className="grid grid-cols-12 gap-6 lg:gap-8">
         <div className="col-span-12 space-y-6 lg:col-span-8 lg:space-y-8">
           <ThoughtDumpCard
-            title="Thought Dump"
-            body="The forest is not just a collection of trees; it is a living system of connection. Applying this to the new project architecture reveals where calm and structure can coexist."
+            title={latestThought?.title?.trim() || latestThought?.quoteText?.trim() || 'Thought Dump'}
+            body={latestThought?.body?.trim() || latestThought?.quoteText?.trim() || 'Capture your next reflection from the Thoughts module.'}
             onExpand={() => updateMessage('Reflection expanded')}
             onQuickNote={() => navigate('/thoughts')}
           />
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <IncomeSummaryCard amount="$12,450" growth="+12%" targetProgress={80} />
-            <QuickStatsGrid
-              stats={quickStats.map((stat) => {
-                if (stat.label === 'Focus') {
-                  return { ...stat, icon: Timer }
-                }
-
-                if (stat.label === 'Flow States') {
-                  return { ...stat, icon: Leaf }
-                }
-
-                if (stat.label === 'Health') {
-                  return { ...stat, icon: HeartPulse }
-                }
-
-                return { ...stat, icon: Zap }
-              })}
+            <IncomeSummaryCard
+              amount={formatCurrency(totalIncome)}
+              growth={`${netSavings >= 0 ? '+' : ''}${savingsRate}%`}
+              targetProgress={Math.max(0, Math.min(100, savingsRate))}
             />
+            <QuickStatsGrid stats={quickStats} />
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <TeaserCard
               title="Bookmarks"
-              subtitle="24 new links saved this week"
+              subtitle={`${bookmarkCount} saved links`}
               icon={BookMarked}
               onClick={() => navigate('/bookmarks')}
             />
             <TeaserCard
               title="Password Vault"
-              subtitle="Security health: Excellent"
+              subtitle={`Security health: ${health.status}`}
               icon={Lock}
               onClick={() => navigate('/passwords')}
             />

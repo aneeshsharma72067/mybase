@@ -55,70 +55,8 @@ type PasswordStoreActions = {
 
 export type PasswordStore = PasswordStoreState & PasswordStoreActions
 
-function createSeedEntry(input: {
-  id: string
-  label: string
-  username: string
-  strengthSource: string
-  url?: string
-  notes?: string
-  createdAt: string
-}): PasswordEntry {
-  return {
-    id: input.id,
-    label: input.label,
-    username: input.username,
-    ciphertext: '',
-    iv: '',
-    url: input.url,
-    notes: input.notes,
-    strength: calculateStrength(input.strengthSource),
-    createdAt: input.createdAt,
-    updatedAt: input.createdAt,
-  }
-}
-
-const seedEntries: PasswordEntry[] = [
-  createSeedEntry({
-    id: 'pwd-protonmail',
-    label: 'ProtonMail',
-    username: 'alara.woods@proton.me',
-    strengthSource: 'ForestVault#2026',
-    url: 'https://mail.proton.me',
-    notes: 'Primary secure email account',
-    createdAt: '2026-04-01T09:10:00.000Z',
-  }),
-  createSeedEntry({
-    id: 'pwd-github',
-    label: 'GitHub',
-    username: 'alarawoods',
-    strengthSource: 'RepoBloom!443',
-    url: 'https://github.com',
-    notes: 'Personal repositories',
-    createdAt: '2026-04-02T08:00:00.000Z',
-  }),
-  createSeedEntry({
-    id: 'pwd-notion',
-    label: 'Notion',
-    username: 'alara.woods@gmail.com',
-    strengthSource: 'Notion7',
-    url: 'https://notion.so',
-    notes: 'Planning workspace',
-    createdAt: '2026-04-03T12:20:00.000Z',
-  }),
-  createSeedEntry({
-    id: 'pwd-amazon',
-    label: 'Amazon',
-    username: 'alara.woods@gmail.com',
-    strengthSource: 'Cart?8',
-    url: 'https://amazon.com',
-    notes: 'Shopping account',
-    createdAt: '2026-04-05T17:40:00.000Z',
-  }),
-]
-
 const initialState: PasswordStoreState = {
-  entries: seedEntries,
+  entries: [],
   vaultState: 'uninitialized',
   meta: null,
   searchQuery: '',

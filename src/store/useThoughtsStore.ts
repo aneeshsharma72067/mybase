@@ -18,52 +18,6 @@ type ThoughtsStoreActions = {
 
 export type ThoughtsStore = ThoughtStoreState & ThoughtsStoreActions
 
-const seedThoughts: Thought[] = [
-  {
-    id: 't-forest-walk',
-    type: 'braindump',
-    title: 'The quiet power of a morning walk in the misty pines.',
-    body: 'Finding clarity is less about forcing insights and more about allowing space for them to emerge naturally.',
-    tags: ['Meditation', 'Health'],
-    createdAt: '2026-03-30T08:15:00.000Z',
-    updatedAt: '2026-03-30T08:15:00.000Z',
-    isPinned: true,
-    isDraft: false,
-  },
-  {
-    id: 't-minimalism',
-    type: 'braindump',
-    title: 'Digital Minimalism Strategy',
-    body: 'Curating my workspace to include fewer digital interruptions has increased focus depth and reduced daily context switching.',
-    tags: ['Productivity', 'Work'],
-    createdAt: '2026-04-03T18:25:00.000Z',
-    updatedAt: '2026-04-05T07:40:00.000Z',
-    isPinned: false,
-    isDraft: false,
-  },
-  {
-    id: 't-mantra',
-    type: 'quote',
-    quoteText: 'The forest is a social network, but one that actually nourishes the soul.',
-    attribution: 'Weekly Mantra',
-    tags: ['Philosophy', 'Meditation'],
-    createdAt: '2026-04-07T09:10:00.000Z',
-    updatedAt: '2026-04-07T09:10:00.000Z',
-    isPinned: false,
-  },
-  {
-    id: 't-ideas-draft',
-    type: 'braindump',
-    title: 'Content Series Ideas',
-    body: '',
-    tags: ['Creative Flow', 'Future Plans'],
-    createdAt: '2026-04-10T21:00:00.000Z',
-    updatedAt: '2026-04-10T21:00:00.000Z',
-    isPinned: false,
-    isDraft: true,
-  },
-]
-
 function normalizeTitleForAdd(payload: Omit<Thought, 'id' | 'createdAt' | 'updatedAt'>): string | undefined {
   if (payload.type !== 'braindump') {
     return payload.title
@@ -79,7 +33,7 @@ function normalizeTitleForAdd(payload: Omit<Thought, 'id' | 'createdAt' | 'updat
 }
 
 const initialState: ThoughtStoreState = {
-  thoughts: seedThoughts,
+  thoughts: [],
   activeThoughtId: null,
   activeTagFilter: null,
   activeDateFilter: null,

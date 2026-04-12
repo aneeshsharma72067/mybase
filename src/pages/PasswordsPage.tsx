@@ -10,8 +10,6 @@ import { getSecurityHealth, usePasswordStore } from '../store/usePasswordStore'
 import { useThoughtsStore } from '../store/useThoughtsStore'
 import type { PasswordEntry } from '../types/password.types'
 
-const FALLBACK_QUOTE = 'Safety is not the absence of threat, but the presence of serenity.'
-
 function getEntryFaviconUrl(entry: PasswordEntry): string {
   if (!entry.url) {
     return ''
@@ -412,7 +410,7 @@ export function PasswordsPage() {
               className="h-full w-full object-cover"
             />
             <div className="absolute inset-0 bg-linear-to-t from-black/65 to-transparent p-5">
-              <p className="mt-auto text-xs italic text-white">{pinnedQuote?.quoteText ?? FALLBACK_QUOTE}</p>
+              {pinnedQuote?.quoteText ? <p className="mt-auto text-xs italic text-white">{pinnedQuote.quoteText}</p> : null}
               {pinnedQuote?.attribution ? <p className="mt-1 text-[10px] text-white/90">{pinnedQuote.attribution}</p> : null}
             </div>
           </section>

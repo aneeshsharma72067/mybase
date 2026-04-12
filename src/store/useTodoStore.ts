@@ -18,90 +18,9 @@ type TodoStoreActions = {
 
 export type TodoStore = TodoStoreState & TodoStoreActions
 
-function isoDaysAgo(daysAgo: number, hour = 9): string {
-  const date = subDays(new Date(), daysAgo)
-  date.setHours(hour, 0, 0, 0)
-  return date.toISOString()
-}
-
-const seedLists: TodoList[] = [
-  { id: 'todo-list-focus', name: 'Focus', color: '#2d6a4f' },
-  { id: 'todo-list-admin', name: 'Admin', color: '#40665d' },
-  { id: 'todo-list-health', name: 'Health', color: '#a83836' },
-]
-
-const seedTodos: Todo[] = [
-  {
-    id: 'todo-1',
-    title: 'Refine weekly dashboard summary',
-    note: 'Align sections before standup',
-    priority: 'high',
-    dueDate: format(subDays(new Date(), -1), 'yyyy-MM-dd'),
-    listId: seedLists[0].id,
-    done: true,
-    createdAt: isoDaysAgo(6, 8),
-    updatedAt: isoDaysAgo(6, 17),
-  },
-  {
-    id: 'todo-2',
-    title: 'Clear unread financial reminders',
-    note: 'Inbox zero for banking updates',
-    priority: 'med',
-    dueDate: format(subDays(new Date(), -2), 'yyyy-MM-dd'),
-    listId: seedLists[1].id,
-    done: true,
-    createdAt: isoDaysAgo(5, 10),
-    updatedAt: isoDaysAgo(4, 14),
-  },
-  {
-    id: 'todo-3',
-    title: 'Morning mobility sequence',
-    note: '15 min hips and thoracic',
-    priority: 'low',
-    dueDate: getTodayISO(),
-    listId: seedLists[2].id,
-    done: true,
-    createdAt: isoDaysAgo(3, 7),
-    updatedAt: isoDaysAgo(2, 8),
-  },
-  {
-    id: 'todo-4',
-    title: 'Draft copy for goals hero',
-    note: 'Keep wording outcome-focused',
-    priority: 'high',
-    dueDate: getTodayISO(),
-    listId: seedLists[0].id,
-    done: false,
-    createdAt: isoDaysAgo(2, 11),
-    updatedAt: isoDaysAgo(2, 11),
-  },
-  {
-    id: 'todo-5',
-    title: 'Archive stale screenshots',
-    note: 'Keep only latest state references',
-    priority: 'med',
-    dueDate: format(subDays(new Date(), -3), 'yyyy-MM-dd'),
-    listId: seedLists[1].id,
-    done: false,
-    createdAt: isoDaysAgo(1, 13),
-    updatedAt: isoDaysAgo(1, 13),
-  },
-  {
-    id: 'todo-6',
-    title: 'Evening walk and breathing set',
-    note: 'No phone for 30 minutes',
-    priority: 'low',
-    dueDate: format(subDays(new Date(), -4), 'yyyy-MM-dd'),
-    listId: seedLists[2].id,
-    done: false,
-    createdAt: isoDaysAgo(0, 9),
-    updatedAt: isoDaysAgo(0, 9),
-  },
-]
-
 const initialState: TodoStoreState = {
-  todos: seedTodos,
-  lists: seedLists,
+  todos: [],
+  lists: [],
 }
 
 function reorderItems(items: Todo[], ids: string[]): Todo[] {

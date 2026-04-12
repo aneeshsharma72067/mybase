@@ -64,7 +64,7 @@ export function BookmarksHero({ heroBookmark, distribution, totalCount, onOpenHe
               </Pie>
             </PieChart>
           </ResponsiveContainer>
-          <div className="-mt-24 flex h-24 w-full items-center justify-center">
+          <div className="-mt-32 flex h-24 w-full items-center justify-center">
             <div className="flex h-24 w-24 flex-col items-center justify-center rounded-full bg-surface-container-lowest">
               <span className="text-2xl font-black text-primary">{totalCount}</span>
               <span className="text-[10px] font-bold uppercase tracking-widest text-outline">TOTAL</span>

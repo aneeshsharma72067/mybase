@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 import { persist } from 'zustand/middleware'
-import { subDays } from 'date-fns'
 import { v4 as uuidv4 } from 'uuid'
 import { createZustandStorage } from '../lib/storage'
 import type { Bookmark } from '../types/bookmark.types'
@@ -26,127 +25,8 @@ export interface BookmarkStoreState {
 
 export type BookmarksStore = BookmarkStoreState & BookmarksStoreActions
 
-function isoDaysAgo(daysAgo: number): string {
-  return subDays(new Date(), daysAgo).toISOString()
-}
-
-const seedBookmarks: Bookmark[] = [
-  {
-    id: uuidv4(),
-    url: 'https://www.nngroup.com/articles/ux-research-cheat-sheet/',
-    title: 'UX Research Cheat Sheet',
-    description: 'Practical methods and timing suggestions for product teams.',
-    coverImage:
-      'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80',
-    category: 'research',
-    tags: ['ux', 'methods', 'discovery'],
-    notes: 'Great reference before planning interviews.',
-    isPinned: true,
-    createdAt: isoDaysAgo(2),
-    updatedAt: isoDaysAgo(2),
-  },
-  {
-    id: uuidv4(),
-    url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript',
-    title: 'MDN JavaScript Guide',
-    description: 'Canonical JavaScript language reference and examples.',
-    category: 'reference',
-    tags: ['javascript', 'docs'],
-    notes: 'Daily lookup source.',
-    isPinned: false,
-    createdAt: isoDaysAgo(5),
-    updatedAt: isoDaysAgo(4),
-  },
-  {
-    id: uuidv4(),
-    url: 'https://tailwindcss.com/docs/installation/using-vite',
-    title: 'Tailwind with Vite Setup',
-    description: 'Official setup notes for the current stack.',
-    category: 'tech',
-    tags: ['tailwind', 'vite', 'frontend'],
-    isPinned: false,
-    createdAt: isoDaysAgo(8),
-    updatedAt: isoDaysAgo(8),
-  },
-  {
-    id: uuidv4(),
-    url: 'https://www.smashingmagazine.com/2024/01/design-systems-practical-guide/',
-    title: 'Practical Design Systems Guide',
-    description: 'Scaling tokens and components across product surfaces.',
-    coverImage:
-      'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80',
-    category: 'design',
-    tags: ['design-system', 'tokens', 'ui'],
-    notes: 'Useful examples for handoff docs.',
-    isPinned: false,
-    createdAt: isoDaysAgo(11),
-    updatedAt: isoDaysAgo(10),
-  },
-  {
-    id: uuidv4(),
-    url: 'https://www.figma.com/community/file/1035203688168086460',
-    title: 'Dashboard UI Pattern Library',
-    description: 'Collection of card and panel patterns for data-heavy interfaces.',
-    coverImage:
-      'https://images.unsplash.com/photo-1487014679447-9f8336841d58?auto=format&fit=crop&w=1200&q=80',
-    category: 'design',
-    tags: ['dashboard', 'patterns', 'layout'],
-    isPinned: false,
-    createdAt: isoDaysAgo(14),
-    updatedAt: isoDaysAgo(13),
-  },
-  {
-    id: uuidv4(),
-    url: 'https://arxiv.org/abs/1706.03762',
-    title: 'Attention Is All You Need',
-    description: 'Foundational transformer paper for model architecture context.',
-    category: 'research',
-    tags: ['ml', 'paper', 'transformers'],
-    notes: 'Revisit section 3 for attention math.',
-    isPinned: false,
-    createdAt: isoDaysAgo(18),
-    updatedAt: isoDaysAgo(17),
-  },
-  {
-    id: uuidv4(),
-    url: 'https://web.dev/vitals/',
-    title: 'Web Vitals',
-    description: 'Performance metrics and optimization guidance.',
-    category: 'tech',
-    tags: ['performance', 'core-web-vitals'],
-    isPinned: false,
-    createdAt: isoDaysAgo(21),
-    updatedAt: isoDaysAgo(21),
-  },
-  {
-    id: uuidv4(),
-    url: 'https://react.dev/reference/react/useMemo',
-    title: 'React useMemo Reference',
-    description: 'Memoization guidance and caveats.',
-    category: 'reference',
-    tags: ['react', 'hooks'],
-    notes: 'Check when optimizing render work.',
-    isPinned: false,
-    createdAt: isoDaysAgo(24),
-    updatedAt: isoDaysAgo(23),
-  },
-  {
-    id: uuidv4(),
-    url: 'https://www.behance.net/galleries/ui-ux',
-    title: 'Behance UI Collections',
-    description: 'Visual inspiration for modern product interfaces.',
-    coverImage:
-      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
-    category: 'design',
-    tags: ['inspiration', 'visuals'],
-    isPinned: false,
-    createdAt: isoDaysAgo(28),
-    updatedAt: isoDaysAgo(28),
-  },
-]
-
 const initialState: BookmarkStoreState = {
-  bookmarks: seedBookmarks,
+  bookmarks: [],
   activeCategoryFilter: null,
   searchQuery: '',
   visibleCount: 9,
