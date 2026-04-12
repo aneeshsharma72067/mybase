@@ -1,5 +1,4 @@
 import { Check, Plus } from 'lucide-react'
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 interface TodoItem {
@@ -15,21 +14,21 @@ interface TodosCardProps {
   onViewAll: () => void
 }
 
-export function TodosCard({ items, onToggleTodo, onAddTodo, onViewAll }: TodosCardProps) {
-  const [nextTodo, setNextTodo] = useState('')
+export function TodosCard({ items, onToggleTodo, onViewAll }: TodosCardProps) {
+  // const [nextTodo, setNextTodo] = useState('')
 
   const navigate = useNavigate()
 
-  function handleAddTodo() {
-    const normalized = nextTodo.trim()
+  // function handleAddTodo() {
+  //   const normalized = nextTodo.trim()
 
-    if (!normalized) {
-      return
-    }
+  //   if (!normalized) {
+  //     return
+  //   }
 
-    onAddTodo(normalized)
-    setNextTodo('')
-  }
+  //   onAddTodo(normalized)
+  //   setNextTodo('')
+  // }
 
   return (
     <section className="rounded-xl bg-surface-container-lowest p-6">
