@@ -1,58 +1,34 @@
 import { useMemo } from 'react'
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from 'recharts'
 
 interface MomentumOverviewCardProps {
   momentum: { day: string; count: number }[]
   note: string
 }
 
-type MomentumBarShapeProps = {
-  x?: number
-  y?: number
-  width?: number
-  height?: number
-  fill?: string
-}
-
-function MomentumBarShape({ x, y, width, height, fill }: MomentumBarShapeProps) {
-  if (x === undefined || y === undefined || width === undefined || height === undefined) {
-    return null
-  }
-
-  const barHeight = Math.max(height, 4)
-  const barY = y + height - barHeight
-
-  return <rect x={x} y={barY} width={width} height={barHeight} rx={999} fill={fill} />
-}
-
 export function MomentumOverviewCard({ momentum, note }: MomentumOverviewCardProps) {
-  const ticks = useMemo(() => momentum.map((entry) => entry.day), [momentum])
+  const maxValue = useMemo(() => Math.max(...momentum.map((entry) => entry.count), 0), [momentum])
 
   return (
     <section className="col-span-12 flex h-72 flex-col rounded-xl bg-surface-container-high p-8 lg:col-span-4 lg:h-80 lg:p-10">
       <h3 className="font-display text-xl font-bold text-on-surface">Momentum Overview</h3>
 
-      <div className="mt-8 min-h-0 flex-1">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={momentum} margin={{ top: 4, right: 0, left: -10, bottom: 0 }} barCategoryGap={12}>
-            <CartesianGrid vertical={false} stroke="var(--color-outline-variant)" strokeOpacity={0.16} />
-            <XAxis
-              dataKey="day"
-              ticks={ticks}
-              axisLine={false}
-              tickLine={false}
-              interval={0}
-              tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 11, fontWeight: 600 }}
-            />
-            <YAxis hide domain={[0, 'dataMax + 1']} />
-            <Bar dataKey="count" shape={(barProps: MomentumBarShapeProps) => <MomentumBarShape {...barProps} fill="var(--color-primary)" />} />
-          </BarChart>
-        </ResponsiveContainer>
+      <div className="mt-8 flex h-full items-end gap-3">
+        {momentum.map((entry) => {
+          const barHeight = maxValue === 0 ? 18 : entry.count === 0 ? 18 : Math.max(18, (entry.count / maxValue) * 100)
+          const trackTone = entry.count === 0 ? 'bg-primary/15' : 'bg-primary/20'
+          const fillTone = entry.count === 0 ? 'bg-primary/20' : 'bg-primary'
+
+          return (
+            <div key={entry.day} className={['relative h-full flex-1 rounded-t-full', trackTone].join(' ')}>
+              <div className="absolute inset-x-0 bottom-0 rounded-t-full" style={{ height: `${barHeight}%` }}>
+                <div className={['h-full w-full rounded-t-full', fillTone].join(' ')} />
+              </div>
+            </div>
+          )
+        })}
       </div>
 
-      <p className="mt-4 text-sm text-on-surface-variant">
-        {note}
-      </p>
+      <p className="mt-4 text-sm text-on-surface-variant">{note}</p>
     </section>
   )
 }

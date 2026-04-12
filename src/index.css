@@ -201,3 +201,8 @@ body {
 .settings-surface {
 	transition: border-radius 220ms ease;
 }
+
+/* no scrollbar */
+.scrollbar-none::-webkit-scrollbar {
+	display: none;
+}

@@ -44,7 +44,7 @@ export function TodoQuickAdd({ lists, activeListId, onCreate }: TodoQuickAddProp
 
   return (
     <section className="rounded-xl border-2 border-dashed border-outline-variant/35 bg-surface-container-lowest p-4">
-      <div className="grid gap-2 lg:grid-cols-[2fr_2fr_1fr_1fr_auto]">
+      <div className="flex flex-wrap gap-2 lg:grid-cols-[2fr_2fr_1fr_1fr_auto]">
         <input
           value={title}
           onChange={(event) => setTitle(event.target.value)}

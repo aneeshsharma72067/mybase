@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { TodoFiltersBar, type TodoFilter } from '../components/todos/TodoFiltersBar'
 import { TodoHeader } from '../components/todos/TodoHeader'
 import { TodoInsightCard } from '../components/todos/TodoInsightCard'
@@ -8,10 +8,13 @@ import { TodoQuickAdd } from '../components/todos/TodoQuickAdd'
 import { TodoTaskItem } from '../components/todos/TodoTaskItem'
 import {
   getCompletedTodos,
+  getFilteredTodos,
+  getTodoMomentumData,
   getPendingTodos,
   getTodaysTodos,
   useTodoStore,
 } from '../store/useTodoStore'
+import { useThoughtsStore } from '../store/useThoughtsStore'
 
 export function TodoPage() {
   const todos = useTodoStore((state) => state.todos)
@@ -26,56 +29,66 @@ export function TodoPage() {
 
   const [searchValue, setSearchValue] = useState('')
   const [statusText, setStatusText] = useState('Todo flow ready')
+  const [toastText, setToastText] = useState<string | null>(null)
   const [activeFilter, setActiveFilter] = useState<TodoFilter>('all')
   const [activeListId, setActiveListId] = useState('all')
+  const [archiveOnly, setArchiveOnly] = useState(false)
+  const thoughts = useThoughtsStore((state) => state.thoughts)
+
+  function pushStatus(message: string) {
+    setStatusText(message)
+    setToastText(message)
+  }
+
+  useEffect(() => {
+    if (!toastText) {
+      return
+    }
+
+    const timeout = window.setTimeout(() => {
+      setToastText(null)
+    }, 2200)
+
+    return () => {
+      window.clearTimeout(timeout)
+    }
+  }, [toastText])
 
   const counts = useMemo(
     () => ({
       all: todos.length,
-      pending: getPendingTodos().length,
-      completed: getCompletedTodos().length,
-      today: getTodaysTodos().length,
+      pending: getPendingTodos(todos).length,
+      completed: getCompletedTodos(todos).length,
+      today: getTodaysTodos(todos).length,
     }),
     [todos],
   )
 
   const visibleTodos = useMemo(() => {
-    const lowered = searchValue.trim().toLowerCase()
-
-    const byFilter =
-      activeFilter === 'pending'
-        ? todos.filter((todo) => !todo.done)
-        : activeFilter === 'completed'
-        ? todos.filter((todo) => todo.done)
-        : activeFilter === 'today'
-        ? getTodaysTodos()
-        : todos
-
-    const byList =
-      activeListId === 'all' ? byFilter : byFilter.filter((todo) => todo.listId === activeListId)
-
-    if (!lowered) {
-      return byList
-    }
-
-    return byList.filter((todo) => {
-      const titleMatch = todo.title.toLowerCase().includes(lowered)
-      const noteMatch = (todo.note ?? '').toLowerCase().includes(lowered)
-      return titleMatch || noteMatch
-    })
-  }, [activeFilter, activeListId, searchValue, todos])
+    return getFilteredTodos(todos, activeFilter, activeListId, searchValue, archiveOnly)
+  }, [activeFilter, activeListId, archiveOnly, searchValue, todos])
 
   const listNameById = useMemo(() => {
     return new Map(lists.map((list) => [list.id, list.name] as const))
   }, [lists])
 
-  const momentumBars = useMemo(() => {
-    const total = Math.max(todos.length, 1)
-    const completed = todos.filter((todo) => todo.done).length
-    const pending = todos.length - completed
-    const ratio = Math.round((completed / total) * 100)
-    return [Math.max(20, ratio - 35), Math.max(30, ratio - 20), Math.max(25, ratio - 10), ratio, Math.min(100, ratio + 10), Math.max(20, pending * 8), Math.max(25, total * 7)]
-  }, [todos])
+  const momentumData = useMemo(() => getTodoMomentumData(todos), [todos])
+
+  const pinnedQuote = useMemo(() => {
+    const quote = thoughts.find((thought) => thought.type === 'quote' && thought.isPinned && thought.quoteText)
+
+    if (!quote?.quoteText) {
+      return {
+        text: 'Small completed tasks create enough cognitive calm to protect your most meaningful work blocks.',
+        attribution: 'MyBase Insight',
+      }
+    }
+
+    return {
+      text: quote.quoteText,
+      attribution: quote.attribution || 'Pinned Quote',
+    }
+  }, [thoughts])
 
   function moveTodo(todoId: string, direction: -1 | 1) {
     const currentIndex = todos.findIndex((todo) => todo.id === todoId)
@@ -101,11 +114,16 @@ export function TodoPage() {
       <TodoHeader
         searchValue={searchValue}
         onSearchValueChange={setSearchValue}
-        onOpenSettings={() => setStatusText('Settings opened')}
-        onOpenArchive={() => setStatusText('Archive viewed')}
-        onOpenNotifications={() => setStatusText('Notifications checked')}
-        onOpenCreate={() => setStatusText('Quick create ready below')}
+        onOpenSettings={() => pushStatus('Settings opened')}
+        onOpenArchive={() => {
+          const next = !archiveOnly
+          setArchiveOnly(next)
+          pushStatus(next ? 'Archive mode enabled' : 'Archive mode disabled')
+        }}
+        onOpenNotifications={() => pushStatus('Notifications checked')}
+        onOpenCreate={() => pushStatus('Quick create ready below')}
         statusText={statusText}
+        archiveActive={archiveOnly}
       />
 
       <section className="grid grid-cols-12 gap-6 lg:gap-8">
@@ -119,7 +137,7 @@ export function TodoPage() {
               activeFilter={activeFilter}
               onFilterChange={(filter) => {
                 setActiveFilter(filter)
-                setStatusText(`Filter changed to ${filter}`)
+                pushStatus(`Filter changed to ${filter}`)
               }}
               counts={counts}
             />
@@ -131,13 +149,13 @@ export function TodoPage() {
             onActiveListChange={setActiveListId}
             onAddList={(name, color) => {
               addList({ name, color })
-              setStatusText(`Created list ${name}`)
+              pushStatus(`Created list ${name}`)
             }}
             onDeleteList={(id) => {
               const name = listNameById.get(id) ?? 'list'
               deleteList(id)
               setActiveListId('all')
-              setStatusText(`Deleted ${name}`)
+              pushStatus(`Deleted ${name}`)
             }}
           />
 
@@ -149,17 +167,17 @@ export function TodoPage() {
                 listName={todo.listId ? listNameById.get(todo.listId) : undefined}
                 onToggle={() => {
                   toggleTodo(todo.id)
-                  setStatusText(todo.done ? 'Task marked pending' : 'Task completed')
+                  pushStatus(todo.done ? 'Task marked pending' : 'Task completed')
                 }}
                 onDelete={() => {
                   deleteTodo(todo.id)
-                  setStatusText('Task deleted')
+                  pushStatus('Task deleted')
                 }}
                 onMoveUp={() => moveTodo(todo.id, -1)}
                 onMoveDown={() => moveTodo(todo.id, 1)}
                 onUpdate={(patch) => {
                   updateTodo(todo.id, patch)
-                  setStatusText('Task updated')
+                  pushStatus('Task updated')
                 }}
               />
             ))}
@@ -176,23 +194,27 @@ export function TodoPage() {
             activeListId={activeListId}
             onCreate={(input) => {
               addTodo(input)
-              setStatusText('Task added')
+              pushStatus('Task added')
             }}
           />
         </div>
 
         <div className="col-span-12 space-y-5 lg:col-span-4">
           <TodoMomentumCard
-            bars={momentumBars}
-            flowIndex={Math.round((counts.completed / Math.max(counts.all, 1)) * 100)}
-            deepWorkHours={Math.round((counts.completed + counts.pending * 0.5) * 1.2)}
+            days={momentumData.days}
+            completionRate={momentumData.completionRate}
+            completedThisWeek={momentumData.completedThisWeek}
           />
 
-          <TodoInsightCard
-            text="Users who complete mindfulness tasks before 10 AM show a 24% increase in sustained focus throughout the day."
-          />
+          <TodoInsightCard quoteText={pinnedQuote.text} attribution={pinnedQuote.attribution} />
         </div>
       </section>
+
+      {toastText ? (
+        <div className="pointer-events-none fixed bottom-6 right-6 z-40 rounded-full bg-surface-container-high px-4 py-2 text-sm font-semibold text-on-surface shadow-lg">
+          {toastText}
+        </div>
+      ) : null}
     </div>
   )
 }

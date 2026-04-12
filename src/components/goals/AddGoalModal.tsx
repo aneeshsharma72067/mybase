@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import { useGoalsStore } from '../../store/useGoalsStore'
 import type { GoalType } from '../../types/goal.types'
@@ -43,29 +43,39 @@ export function AddGoalModal({ isOpen, onClose }: AddGoalModalProps) {
     setIsFocused(false)
   }
 
-  function requestClose() {
+  const requestClose = useCallback(() => {
     if (title.trim().length > 0 && !window.confirm('Discard this new goal?')) {
       return
     }
 
     onClose()
-  }
+  }, [onClose, title])
 
   useEffect(() => {
     if (isOpen) {
-      setIsMounted(true)
-      setIsVisible(false)
-      const id = requestAnimationFrame(() => setIsVisible(true))
-      return () => cancelAnimationFrame(id)
+      const mountFrame = requestAnimationFrame(() => {
+        setIsMounted(true)
+        setIsVisible(false)
+
+        requestAnimationFrame(() => setIsVisible(true))
+      })
+
+      return () => cancelAnimationFrame(mountFrame)
     }
 
-    setIsVisible(false)
+    const closeFrame = requestAnimationFrame(() => {
+      setIsVisible(false)
+    })
+
     const timeoutId = window.setTimeout(() => {
       setIsMounted(false)
       resetForm()
     }, ANIMATION_MS)
 
-    return () => window.clearTimeout(timeoutId)
+    return () => {
+      cancelAnimationFrame(closeFrame)
+      window.clearTimeout(timeoutId)
+    }
   }, [isOpen])
 
   useEffect(() => {
@@ -115,7 +125,7 @@ export function AddGoalModal({ isOpen, onClose }: AddGoalModalProps) {
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, title])
+  }, [isOpen, requestClose, title])
 
   function addMilestoneField() {
     setMilestoneInputs((current) => [...current, ''])
@@ -181,8 +191,8 @@ export function AddGoalModal({ isOpen, onClose }: AddGoalModalProps) {
       <div
         ref={dialogRef}
         className={[
-          'relative z-10 w-full max-w-3xl rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-6 shadow-2xl transition-[opacity,transform] ease-out md:p-8',
-          isVisible ? 'translate-y-0 opacity-100' : 'translate-y-5 opacity-0',
+          'relative scrollbar-none z-10 w-full h-11/12 overflow-y-scroll max-w-3xl rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-6 shadow-2xl transition-[opacity,transform] ease-out md:p-8',
+          isVisible ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-6 scale-[0.98] opacity-0',
         ].join(' ')}
         style={{ transitionDuration: `${ANIMATION_MS}ms` }}
       >
@@ -216,13 +226,18 @@ export function AddGoalModal({ isOpen, onClose }: AddGoalModalProps) {
             className="w-full resize-none rounded-xl border border-outline-variant/50 bg-surface px-4 py-3 text-on-surface outline-none transition-colors focus:border-primary"
           />
 
-          <div className="flex flex-wrap gap-2 rounded-full bg-surface-container-lowest p-1 text-sm font-bold">
+          <div className="relative flex rounded-full bg-surface-container-lowest p-1 text-sm font-bold">
+            <span
+              aria-hidden="true"
+              className="absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full bg-primary transition-transform duration-220 ease-out"
+              style={{ transform: goalType === 'milestone' ? 'translateX(0%)' : 'translateX(100%)' }}
+            />
             <button
               type="button"
               onClick={() => setGoalType('milestone')}
               className={[
-                'rounded-full px-4 py-2 transition-colors',
-                goalType === 'milestone' ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:text-on-surface',
+                'relative z-10 flex-1 rounded-full px-4 py-2 transition-colors',
+                goalType === 'milestone' ? 'text-on-primary' : 'text-on-surface-variant hover:text-on-surface',
               ].join(' ')}
             >
               Milestone-based
@@ -231,8 +246,8 @@ export function AddGoalModal({ isOpen, onClose }: AddGoalModalProps) {
               type="button"
               onClick={() => setGoalType('numeric')}
               className={[
-                'rounded-full px-4 py-2 transition-colors',
-                goalType === 'numeric' ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:text-on-surface',
+                'relative z-10 flex-1 rounded-full px-4 py-2 transition-colors',
+                goalType === 'numeric' ? 'text-on-primary' : 'text-on-surface-variant hover:text-on-surface',
               ].join(' ')}
             >
               Numeric

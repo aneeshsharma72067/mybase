@@ -1,9 +1,9 @@
 import { Grid2x2, LayoutList } from 'lucide-react'
 
 interface BookmarkFiltersBarProps {
-  activeCategory: string
+  activeCategory: string | null
   categories: string[]
-  onCategoryChange: (category: string) => void
+  onCategoryChange: (category: string | null) => void
   viewMode: 'grid' | 'list'
   onViewModeChange: (mode: 'grid' | 'list') => void
 }
@@ -20,10 +20,10 @@ export function BookmarkFiltersBar({
       <div className="flex items-center gap-3">
         <button
           type="button"
-          onClick={() => onCategoryChange('all')}
+          onClick={() => onCategoryChange(null)}
           className={[
             'rounded-full px-6 py-2 text-sm font-bold transition-all',
-            activeCategory === 'all' ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-variant',
+            activeCategory === null ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-variant',
           ].join(' ')}
         >
           All

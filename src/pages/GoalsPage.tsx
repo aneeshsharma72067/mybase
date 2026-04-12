@@ -193,7 +193,7 @@ export function GoalsPage() {
     if (drawerGoal) {
       drawerTimerRef.current = window.setTimeout(() => {
         setDrawerGoal(null)
-      }, 200)
+      }, 240)
     }
   }, [activeGoalId, drawerGoal, goals])
 

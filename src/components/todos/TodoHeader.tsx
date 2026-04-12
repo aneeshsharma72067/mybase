@@ -8,6 +8,7 @@ interface TodoHeaderProps {
   onOpenNotifications: () => void
   onOpenCreate: () => void
   statusText: string
+  archiveActive: boolean
 }
 
 export function TodoHeader({
@@ -18,6 +19,7 @@ export function TodoHeader({
   onOpenNotifications,
   onOpenCreate,
   statusText,
+  archiveActive,
 }: TodoHeaderProps) {
   return (
     <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
@@ -52,9 +54,14 @@ export function TodoHeader({
         <button
           type="button"
           onClick={onOpenArchive}
-          className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-3 py-2 text-xs font-semibold hover:bg-surface-container"
+          className={[
+            'inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold',
+            archiveActive
+              ? 'bg-primary text-on-primary'
+              : 'bg-surface-container-low hover:bg-surface-container',
+          ].join(' ')}
         >
-          Archive
+          {archiveActive ? 'Archive On' : 'Archive'}
         </button>
 
         <button

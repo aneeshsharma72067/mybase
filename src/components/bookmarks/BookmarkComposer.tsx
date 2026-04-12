@@ -7,7 +7,7 @@ interface BookmarkComposerProps {
   isOpen: boolean
   editingBookmark: Bookmark | null
   onClose: () => void
-  onSave: (input: { title: string; url: string; category: string; notes?: string; favicon?: string; coverImageUrl?: string }) => void
+  onSave: (input: { title: string; url: string; category: string; notes?: string; favicon?: string; coverImage?: string }) => void
 }
 
 const emptyForm = {
@@ -16,7 +16,7 @@ const emptyForm = {
   category: 'Reference',
   notes: '',
   favicon: '',
-  coverImageUrl: '',
+  coverImage: '',
 }
 
 export function BookmarkComposer({ isOpen, editingBookmark, onClose, onSave }: BookmarkComposerProps) {
@@ -31,7 +31,7 @@ export function BookmarkComposer({ isOpen, editingBookmark, onClose, onSave }: B
         category: editingBookmark.category,
         notes: editingBookmark.notes ?? '',
         favicon: editingBookmark.favicon ?? '',
-        coverImageUrl: editingBookmark.coverImageUrl ?? '',
+        coverImage: editingBookmark.coverImage ?? '',
       })
       return
     }
@@ -71,7 +71,7 @@ export function BookmarkComposer({ isOpen, editingBookmark, onClose, onSave }: B
       category: trimmedCategory,
       notes: form.notes.trim() || undefined,
       favicon: form.favicon.trim() || undefined,
-      coverImageUrl: form.coverImageUrl.trim() || undefined,
+      coverImage: form.coverImage.trim() || undefined,
     })
     onClose()
   }
@@ -169,8 +169,8 @@ export function BookmarkComposer({ isOpen, editingBookmark, onClose, onSave }: B
           </div>
 
           <input
-            value={form.coverImageUrl}
-            onChange={(event) => setForm((current) => ({ ...current, coverImageUrl: event.target.value }))}
+            value={form.coverImage}
+            onChange={(event) => setForm((current) => ({ ...current, coverImage: event.target.value }))}
             placeholder="Cover image URL"
             className="w-full rounded-2xl border-0 bg-surface-container-low px-5 py-4 text-sm font-medium outline-none focus:ring-2 focus:ring-primary/20"
           />

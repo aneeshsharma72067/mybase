@@ -15,6 +15,7 @@ export interface Todo {
   listId?: string
   done: boolean
   createdAt: string
+  updatedAt: string
 }
 
 export interface TodoStoreState {

@@ -53,6 +53,7 @@ export function GoalDetailsDrawer({ goal }: GoalDetailsDrawerProps) {
   const updateGoal = useGoalsStore((state) => state.updateGoal)
   const logProgress = useGoalsStore((state) => state.logProgress)
 
+  const [isVisible, setIsVisible] = useState(false)
   const [milestoneInput, setMilestoneInput] = useState('')
   const [progressValue, setProgressValue] = useState('')
   const [progressNote, setProgressNote] = useState('')
@@ -71,6 +72,16 @@ export function GoalDetailsDrawer({ goal }: GoalDetailsDrawerProps) {
   function closeDrawer() {
     setActiveGoal(null)
   }
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsVisible(false)
+      const frameId = requestAnimationFrame(() => setIsVisible(true))
+      return () => cancelAnimationFrame(frameId)
+    }
+
+    setIsVisible(false)
+  }, [isOpen])
 
   function addMilestone() {
     const trimmedLabel = milestoneInput.trim()
@@ -167,9 +178,12 @@ export function GoalDetailsDrawer({ goal }: GoalDetailsDrawerProps) {
   }, [isOpen])
 
   useEffect(() => {
-    setMilestoneInput('')
-    setProgressValue('')
-    setProgressNote('')
+    const callSetters = () => {
+      setMilestoneInput('')
+      setProgressValue('')
+      setProgressNote('')
+    }
+    callSetters()
   }, [goal.id])
 
   return (
@@ -177,7 +191,7 @@ export function GoalDetailsDrawer({ goal }: GoalDetailsDrawerProps) {
       className="fixed inset-0 z-50"
       aria-modal="true"
       role="dialog"
-      onMouseDown={(event) => {
+      onClick={(event) => {
         if (event.target === event.currentTarget) {
           closeDrawer()
         }
@@ -186,20 +200,21 @@ export function GoalDetailsDrawer({ goal }: GoalDetailsDrawerProps) {
       <div
         className={[
           'absolute inset-0 bg-black/30 transition-opacity ease-out',
-          isOpen ? 'opacity-100' : 'opacity-0',
+          isVisible ? 'opacity-100' : 'opacity-0',
         ].join(' ')}
-        style={{ transitionDuration: isOpen ? '240ms' : '200ms' }}
+        style={{ transitionDuration: isVisible ? '240ms' : '200ms' }}
       />
 
       <aside
         ref={panelRef}
         className={[
-          'absolute right-0 top-0 flex h-full w-full max-w-105 flex-col overflow-y-auto border-l border-outline-variant/20 bg-surface-container-lowest p-6 shadow-2xl transition-[transform,opacity] ease-out md:p-8',
-          isOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0',
+          'absolute right-0 top-0 flex h-full w-full max-w-105 dura\
+           flex-col overflow-y-auto border-l border-outline-variant/20 bg-surface-container-lowest p-6 shadow-2xl ease-out md:p-8',
+          isVisible ? 'translate-x-0' : 'translate-x-full',
         ].join(' ')}
-        style={{ transitionDuration: isOpen ? '240ms' : '200ms' }}
+        style={{ transitionDuration: isVisible ? '240ms' : '200ms' }}
       >
-        <div className="mb-5 flex items-start justify-between gap-4">
+        <div className="mb-5 flex items-start justify-between gap-4">   
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="font-display text-2xl font-black text-on-surface">{goal.title}</h2>
@@ -213,7 +228,7 @@ export function GoalDetailsDrawer({ goal }: GoalDetailsDrawerProps) {
           <button
             type="button"
             onClick={closeDrawer}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
+            className="inline-flex h-9 aspect-square items-center justify-center rounded-full bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
             aria-label="Close goal details"
           >
             <X size={16} />

@@ -1,17 +1,14 @@
-export type BookmarkCategory = string
-
 export interface Bookmark {
   id: string
-  title: string
   url: string
+  title: string
+  description?: string
+  coverImage?: string
   favicon?: string
-  coverImageUrl?: string
-  category: BookmarkCategory
+  category: string
+  tags: string[]
   notes?: string
+  isPinned: boolean
   createdAt: string
-}
-
-export interface BookmarkStoreState {
-  bookmarks: Bookmark[]
-  categories: string[]
+  updatedAt: string
 }
