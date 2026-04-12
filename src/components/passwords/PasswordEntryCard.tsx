@@ -1,30 +1,40 @@
-import { Copy, Eye, EyeOff, type LucideIcon } from 'lucide-react'
+import { Check, Copy, Eye, EyeOff, Pencil } from 'lucide-react'
+import { useState } from 'react'
 import type { PasswordEntry } from '../../types/password.types'
-import type { PasswordStrength } from './passwords.helpers'
 
 interface PasswordEntryCardProps {
   entry: PasswordEntry
-  icon: LucideIcon
+  faviconUrl: string
   passwordValue: string
   isRevealed: boolean
-  strength: PasswordStrength
+  isCopied: boolean
+  isDecrypting: boolean
   onToggleReveal: (id: string) => void
-  onCopy: (value: string) => void
+  onEdit: (entry: PasswordEntry) => void
+  onCopy: () => void
 }
 
 export function PasswordEntryCard({
   entry,
-  icon: Icon,
+  faviconUrl,
   passwordValue,
   isRevealed,
-  strength,
+  isCopied,
+  isDecrypting,
   onToggleReveal,
+  onEdit,
   onCopy,
 }: PasswordEntryCardProps) {
+  const [showFaviconFallback, setShowFaviconFallback] = useState(false)
+
   return (
     <article className="group flex items-center gap-4 rounded-xl bg-surface-container-lowest p-5 transition-all hover:bg-primary-container/20">
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-on-primary shadow-sm">
-        <Icon size={20} strokeWidth={2.2} />
+        {faviconUrl && !showFaviconFallback ? (
+          <img alt="" className="h-6 w-6" src={faviconUrl} onError={() => setShowFaviconFallback(true)} />
+        ) : (
+          <span className="text-sm font-bold">{entry.label.slice(0, 1).toUpperCase()}</span>
+        )}
       </div>
 
       <div className="min-w-0 flex-1">
@@ -38,6 +48,7 @@ export function PasswordEntryCard({
           <button
             type="button"
             onClick={() => onToggleReveal(entry.id)}
+            disabled={isDecrypting}
             className="text-outline transition-colors hover:text-primary"
             aria-label={isRevealed ? 'Hide password' : 'Reveal password'}
           >
@@ -48,9 +59,9 @@ export function PasswordEntryCard({
         <span
           className={[
             'inline-flex items-center gap-1 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em]',
-            strength === 'strong'
+            entry.strength === 'strong'
               ? 'bg-primary-container text-on-primary-container'
-              : strength === 'fair'
+              : entry.strength === 'fair'
               ? 'bg-secondary-container text-on-secondary-container'
               : 'bg-error-container/20 text-error',
           ].join(' ')}
@@ -58,19 +69,29 @@ export function PasswordEntryCard({
           <span
             className={[
               'h-1.5 w-1.5 rounded-full',
-              strength === 'strong' ? 'bg-primary' : strength === 'fair' ? 'bg-secondary' : 'bg-error',
+              entry.strength === 'strong' ? 'bg-primary' : entry.strength === 'fair' ? 'bg-secondary' : 'bg-error',
             ].join(' ')}
           />
-          {strength}
+          {entry.strength}
         </span>
 
         <button
           type="button"
-          onClick={() => onCopy(passwordValue)}
+          onClick={() => onEdit(entry)}
+          className="rounded-full bg-surface-container-low p-2 text-on-surface-variant transition-colors hover:bg-primary-container hover:text-primary"
+          aria-label="Edit entry"
+        >
+          <Pencil size={14} />
+        </button>
+
+        <button
+          type="button"
+          onClick={onCopy}
+          disabled={isDecrypting}
           className="rounded-full bg-surface-container-low p-2 text-on-surface-variant transition-colors hover:bg-primary-container hover:text-primary"
           aria-label="Copy password"
         >
-          <Copy size={14} />
+          {isCopied ? <Check size={14} /> : <Copy size={14} />}
         </button>
       </div>
     </article>

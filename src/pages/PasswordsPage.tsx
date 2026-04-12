@@ -1,92 +1,157 @@
 import { ShieldAlert } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { decrypt, encrypt } from '../lib/crypto'
+import { AddEntryModal } from '../components/passwords/AddEntryModal'
 import { PasswordEntryCard } from '../components/passwords/PasswordEntryCard'
-import { PasswordEntryModal } from '../components/passwords/PasswordEntryModal'
 import { PasswordGeneratorCard } from '../components/passwords/PasswordGeneratorCard'
 import { PasswordsHeader } from '../components/passwords/PasswordsHeader'
 import { SecurityHealthCard } from '../components/passwords/SecurityHealthCard'
 import { VaultLockOverlay } from '../components/passwords/VaultLockOverlay'
-import {
-  generatePassword,
-  initialDraftEntry,
-  resolvePasswordIcon,
-  scorePassword,
-  seedVault,
-  type DraftPasswordEntry,
-} from '../components/passwords/passwords.helpers'
-import { usePasswordStore } from '../store/usePasswordStore'
+import { getSecurityHealth, usePasswordStore } from '../store/usePasswordStore'
+import { useThoughtsStore } from '../store/useThoughtsStore'
+import type { PasswordEntry } from '../types/password.types'
+
+const FALLBACK_QUOTE = 'Safety is not the absence of threat, but the presence of serenity.'
+
+function getEntryFaviconUrl(entry: PasswordEntry): string {
+  if (!entry.url) {
+    return ''
+  }
+
+  try {
+    const hostname = new URL(entry.url).hostname
+    return `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`
+  } catch {
+    return ''
+  }
+}
+
+function generatePassword(length: number, upper: boolean, numbers: boolean, symbols: boolean): string {
+  const lowercase = 'abcdefghijklmnopqrstuvwxyz'
+  const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  const digits = '0123456789'
+  const symbolSet = '!@#$%^&*()_+-=[]{}'
+
+  let charset = lowercase
+
+  if (upper) {
+    charset += uppercase
+  }
+  if (numbers) {
+    charset += digits
+  }
+  if (symbols) {
+    charset += symbolSet
+  }
+
+  const randomValues = window.crypto.getRandomValues(new Uint32Array(length))
+  let next = ''
+
+  for (let i = 0; i < length; i += 1) {
+    next += charset[randomValues[i] % charset.length]
+  }
+
+  return next
+}
 
 export function PasswordsPage() {
   const entries = usePasswordStore((state) => state.entries)
   const vaultState = usePasswordStore((state) => state.vaultState)
+  const meta = usePasswordStore((state) => state.meta)
+  const searchQuery = usePasswordStore((state) => state.searchQuery)
+  const setupVault = usePasswordStore((state) => state.setupVault)
   const unlockVault = usePasswordStore((state) => state.unlockVault)
   const lockVault = usePasswordStore((state) => state.lockVault)
   const addEntry = usePasswordStore((state) => state.addEntry)
+  const updateEntry = usePasswordStore((state) => state.updateEntry)
+  const decryptEntryById = usePasswordStore((state) => state.decryptEntryById)
+  const setSearchQuery = usePasswordStore((state) => state.setSearchQuery)
+  const thoughts = useThoughtsStore((state) => state.thoughts)
 
-  const [searchValue, setSearchValue] = useState('')
-  const [masterPasswordInput, setMasterPasswordInput] = useState('')
-  const [showMasterPasswordInput, setShowMasterPasswordInput] = useState(false)
+  const [setupMasterPassword, setSetupMasterPassword] = useState('')
+  const [confirmMasterPassword, setConfirmMasterPassword] = useState('')
+  const [unlockPassword, setUnlockPassword] = useState('')
   const [unlockError, setUnlockError] = useState('')
-  const [sessionKey, setSessionKey] = useState('')
-  const [revealedIds, setRevealedIds] = useState<Record<string, boolean>>({})
+  const [isSubmittingVault, setIsSubmittingVault] = useState(false)
+  const [revealedIds, setRevealedIds] = useState<Record<string, string>>({})
+  const [copiedIds, setCopiedIds] = useState<Record<string, boolean>>({})
+  const [decryptingIds, setDecryptingIds] = useState<Record<string, boolean>>({})
+  const [showAddEntry, setShowAddEntry] = useState(false)
+  const [editingEntry, setEditingEntry] = useState<PasswordEntry | null>(null)
+  const [prefillPassword, setPrefillPassword] = useState('')
+  const [isSavingEntry, setIsSavingEntry] = useState(false)
   const [generatedPassword, setGeneratedPassword] = useState('')
-  const [length, setLength] = useState(16)
-  const [includeUpper, setIncludeUpper] = useState(true)
-  const [includeLower, setIncludeLower] = useState(true)
-  const [includeNumbers, setIncludeNumbers] = useState(true)
-  const [includeSymbols, setIncludeSymbols] = useState(true)
-  const [isComposerMounted, setIsComposerMounted] = useState(false)
-  const [isComposerVisible, setIsComposerVisible] = useState(false)
-  const [statusText, setStatusText] = useState('Vault locked')
-  const [draftEntry, setDraftEntry] = useState<DraftPasswordEntry>(initialDraftEntry)
-  const hasSeededRef = useRef(false)
-  const composerCloseTimerRef = useRef<number | null>(null)
-  const composerOpenFrameRef = useRef<number | null>(null)
+  const [genLength, setGenLength] = useState(16)
+  const [useUpper, setUseUpper] = useState(true)
+  const [useNumbers, setUseNumbers] = useState(true)
+  const [useSymbols, setUseSymbols] = useState(true)
+  const revealTimeoutsRef = useRef<Record<string, number>>({})
+  const copiedTimeoutsRef = useRef<Record<string, number>>({})
+
+  const pinnedQuote = useMemo(() => thoughts.find((thought) => thought.type === 'quote' && thought.isPinned), [thoughts])
 
   useEffect(() => {
-    lockVault()
-  }, [lockVault])
-
-  useEffect(() => {
-    if (hasSeededRef.current || entries.length > 0) {
-      return
-    }
-
-    hasSeededRef.current = true
-    seedVault.forEach((entry) => addEntry(entry))
-  }, [addEntry, entries.length])
-
-  useEffect(() => {
-    const next = generatePassword({
-      length,
-      includeUpper,
-      includeLower,
-      includeNumbers,
-      includeSymbols,
-    })
+    const next = generatePassword(genLength, useUpper, useNumbers, useSymbols)
     setGeneratedPassword(next)
-  }, [length, includeLower, includeNumbers, includeSymbols, includeUpper])
+  }, [genLength, useNumbers, useSymbols, useUpper])
 
   useEffect(() => {
+    const revealTimeouts = revealTimeoutsRef.current
+    const copiedTimeouts = copiedTimeoutsRef.current
+
     return () => {
-      if (composerCloseTimerRef.current) {
-        window.clearTimeout(composerCloseTimerRef.current)
-      }
-      if (composerOpenFrameRef.current) {
-        window.cancelAnimationFrame(composerOpenFrameRef.current)
-      }
+      Object.values(revealTimeouts).forEach((timeoutId) => window.clearTimeout(timeoutId))
+      Object.values(copiedTimeouts).forEach((timeoutId) => window.clearTimeout(timeoutId))
     }
   }, [])
 
   useEffect(() => {
-    if (vaultState !== 'unlocked' && isComposerMounted) {
-      closeComposer()
+    const revealedKeys = Object.keys(revealedIds)
+
+    revealedKeys.forEach((id) => {
+      if (revealTimeoutsRef.current[id]) {
+        return
+      }
+
+      revealTimeoutsRef.current[id] = window.setTimeout(() => {
+        setRevealedIds((current) => {
+          const next = { ...current }
+          delete next[id]
+          return next
+        })
+      }, 15000)
+    })
+
+    Object.keys(revealTimeoutsRef.current).forEach((id) => {
+      if (!revealedIds[id]) {
+        window.clearTimeout(revealTimeoutsRef.current[id])
+        delete revealTimeoutsRef.current[id]
+      }
+    })
+  }, [revealedIds])
+
+  useEffect(() => {
+    if (vaultState === 'unlocked') {
+      setUnlockError('')
+      setSetupMasterPassword('')
+      setConfirmMasterPassword('')
+      setUnlockPassword('')
+      return
     }
-  }, [isComposerMounted, vaultState])
+
+    setRevealedIds({})
+    setCopiedIds({})
+    setDecryptingIds({})
+    setShowAddEntry(false)
+    setEditingEntry(null)
+    setPrefillPassword('')
+  }, [vaultState])
 
   const visibleEntries = useMemo(() => {
-    const lowered = searchValue.trim().toLowerCase()
+    if (vaultState !== 'unlocked') {
+      return entries
+    }
+
+    const lowered = searchQuery.trim().toLowerCase()
 
     if (!lowered) {
       return entries
@@ -96,193 +161,248 @@ export function PasswordsPage() {
       return (
         entry.label.toLowerCase().includes(lowered) ||
         entry.username.toLowerCase().includes(lowered) ||
-        (entry.url ?? '').toLowerCase().includes(lowered) ||
-        (entry.notes ?? '').toLowerCase().includes(lowered)
+        (entry.url ?? '').toLowerCase().includes(lowered)
       )
     })
-  }, [entries, searchValue])
+  }, [entries, searchQuery, vaultState])
 
-  const strengthSummary = useMemo(() => {
-    const counts = { strong: 0, fair: 0, weak: 0 }
+  const health = useMemo(() => getSecurityHealth(entries), [entries])
+  const atRisk = useMemo(() => entries.filter((entry) => entry.strength === 'weak').length, [entries])
 
-    entries.forEach((entry) => {
-      const resolved = decrypt(entry.encryptedPassword, sessionKey || 'mybase-demo-key')
-      const score = scorePassword(resolved)
-      counts[score] += 1
-    })
+  async function handleSetupSubmit() {
+    const master = setupMasterPassword
+    const confirm = confirmMasterPassword
 
-    const total = Math.max(entries.length, 1)
-    const securePercent = Math.round((counts.strong / total) * 100)
-
-    return {
-      ...counts,
-      total,
-      securePercent,
-    }
-  }, [entries, sessionKey])
-
-  function handleUnlock() {
-    const success = unlockVault(masterPasswordInput)
-
-    if (!success) {
-      setUnlockError('Enter a valid master password to unlock.')
+    if (master !== confirm) {
+      setUnlockError('Passwords do not match')
       return
     }
 
-    setSessionKey(masterPasswordInput.trim())
+    if (master.length < 8) {
+      setUnlockError('Password must be at least 8 characters')
+      return
+    }
+
     setUnlockError('')
-    setMasterPasswordInput('')
-    setShowMasterPasswordInput(false)
-    setStatusText('Vault unlocked')
+    setIsSubmittingVault(true)
+
+    try {
+      await setupVault(master)
+    } finally {
+      setIsSubmittingVault(false)
+    }
   }
 
-  function handleCopy(value: string) {
-    navigator.clipboard.writeText(value)
-    setStatusText('Copied to clipboard')
+  async function handleUnlockSubmit() {
+    setUnlockError('')
+    setIsSubmittingVault(true)
+
+    try {
+      const success = await unlockVault(unlockPassword)
+
+      if (!success) {
+        setUnlockError('Incorrect password')
+      }
+    } finally {
+      setIsSubmittingVault(false)
+    }
   }
 
-  function handleSaveDraft() {
-    const label = draftEntry.label.trim()
-    const username = draftEntry.username.trim()
-    const password = draftEntry.password.trim()
-
-    if (!label || !username || !password) {
-      setStatusText('Label, username, and password are required')
+  async function handleToggleReveal(entryId: string) {
+    if (revealedIds[entryId]) {
+      setRevealedIds((current) => {
+        const next = { ...current }
+        delete next[entryId]
+        return next
+      })
       return
     }
 
-    addEntry({
-      label,
-      username,
-      encryptedPassword: encrypt(password, sessionKey || 'mybase-demo-key'),
-      url: draftEntry.url.trim() || undefined,
-      notes: draftEntry.notes.trim() || undefined,
-    })
+    setDecryptingIds((current) => ({ ...current, [entryId]: true }))
 
-    setDraftEntry(initialDraftEntry)
-    closeComposer()
-    setStatusText('Password entry added')
+    try {
+      const plain = await decryptEntryById(entryId)
+      setRevealedIds((current) => ({ ...current, [entryId]: plain }))
+    } finally {
+      setDecryptingIds((current) => {
+        const next = { ...current }
+        delete next[entryId]
+        return next
+      })
+    }
   }
 
-  function handleDraftChange(field: keyof DraftPasswordEntry, value: string) {
-    setDraftEntry((current) => ({
-      ...current,
-      [field]: value,
-    }))
+  async function handleCopy(entryId: string) {
+    setDecryptingIds((current) => ({ ...current, [entryId]: true }))
+
+    try {
+      const plain = revealedIds[entryId] ?? (await decryptEntryById(entryId))
+      await navigator.clipboard.writeText(plain)
+
+      setCopiedIds((current) => ({ ...current, [entryId]: true }))
+
+      if (copiedTimeoutsRef.current[entryId]) {
+        window.clearTimeout(copiedTimeoutsRef.current[entryId])
+      }
+
+      copiedTimeoutsRef.current[entryId] = window.setTimeout(() => {
+        setCopiedIds((current) => {
+          const next = { ...current }
+          delete next[entryId]
+          return next
+        })
+      }, 1500)
+    } finally {
+      setDecryptingIds((current) => {
+        const next = { ...current }
+        delete next[entryId]
+        return next
+      })
+    }
   }
 
-  function openComposer(prefillPassword?: string) {
-    if (vaultState !== 'unlocked') {
+  function openAddEntry(prefill = '') {
+    setShowAddEntry(true)
+    setEditingEntry(null)
+    setPrefillPassword(prefill)
+  }
+
+  function openEditEntry(entry: PasswordEntry) {
+    setShowAddEntry(true)
+    setEditingEntry(entry)
+    setPrefillPassword('')
+  }
+
+  function handleLockVault() {
+    lockVault()
+    setRevealedIds({})
+    setCopiedIds({})
+  }
+
+  async function handleSaveEntry(payload: {
+    label: string
+    username: string
+    plainPassword?: string
+    url?: string
+    notes?: string
+  }) {
+    setIsSavingEntry(true)
+
+    try {
+      if (editingEntry) {
+        await updateEntry(editingEntry.id, {
+          label: payload.label,
+          username: payload.username,
+          plainPassword: payload.plainPassword,
+          url: payload.url,
+          notes: payload.notes,
+        })
+      } else {
+        await addEntry({
+          label: payload.label,
+          username: payload.username,
+          plainPassword: payload.plainPassword ?? '',
+          url: payload.url,
+          notes: payload.notes,
+        })
+      }
+
+      setShowAddEntry(false)
+      setEditingEntry(null)
+      setPrefillPassword('')
+    } finally {
+      setIsSavingEntry(false)
+    }
+  }
+
+  function handleToggleOption(option: 'upper' | 'numbers' | 'symbols') {
+    const nextState = {
+      upper: useUpper,
+      numbers: useNumbers,
+      symbols: useSymbols,
+    }
+
+    nextState[option] = !nextState[option]
+
+    if (!nextState.upper && !nextState.numbers && !nextState.symbols) {
       return
     }
 
-    if (prefillPassword) {
-      setDraftEntry((current) => ({ ...current, password: prefillPassword }))
-    }
-
-    if (composerCloseTimerRef.current) {
-      window.clearTimeout(composerCloseTimerRef.current)
-      composerCloseTimerRef.current = null
-    }
-
-    setIsComposerMounted(true)
-    setIsComposerVisible(false)
-
-    composerOpenFrameRef.current = window.requestAnimationFrame(() => {
-      setIsComposerVisible(true)
-    })
+    setUseUpper(nextState.upper)
+    setUseNumbers(nextState.numbers)
+    setUseSymbols(nextState.symbols)
   }
 
-  function closeComposer() {
-    setIsComposerVisible(false)
-
-    if (composerCloseTimerRef.current) {
-      window.clearTimeout(composerCloseTimerRef.current)
-    }
-
-    composerCloseTimerRef.current = window.setTimeout(() => {
-      setIsComposerMounted(false)
-      composerCloseTimerRef.current = null
-    }, 220)
-  }
+  const statusText = vaultState === 'unlocked' ? 'Vault unlocked' : meta ? 'Vault locked' : 'Vault not initialized'
 
   return (
     <div className="mx-auto w-full max-w-400">
       <PasswordsHeader
-        searchValue={searchValue}
-        onSearchValueChange={setSearchValue}
-        statusText={statusText}
-        onLockVault={() => {
-          lockVault()
-          setSessionKey('')
-          setStatusText('Vault locked')
+        searchValue={searchQuery}
+        onSearchValueChange={(value) => {
+          if (vaultState !== 'unlocked') {
+            return
+          }
+          setSearchQuery(value)
         }}
-        onAddEntry={() => openComposer(generatedPassword)}
+        statusText={statusText}
+        onLockVault={handleLockVault}
+        onAddEntry={() => openAddEntry()}
         isUnlocked={vaultState === 'unlocked'}
       />
 
       <section className="grid grid-cols-12 gap-8">
         <div className="col-span-12 space-y-4 lg:col-span-8">
-          {visibleEntries.map((entry) => {
-            const Icon = resolvePasswordIcon(entry.label)
-            const isRevealed = Boolean(revealedIds[entry.id])
-            const decrypted = decrypt(entry.encryptedPassword, sessionKey || 'mybase-demo-key')
-            const score = scorePassword(decrypted)
-
-            return (
-              <PasswordEntryCard
-                key={entry.id}
-                entry={entry}
-                icon={Icon}
-                passwordValue={decrypted}
-                isRevealed={isRevealed}
-                strength={score}
-                onToggleReveal={(id) => {
-                  setRevealedIds((current) => ({
-                    ...current,
-                    [id]: !current[id],
-                  }))
-                }}
-                onCopy={handleCopy}
-              />
-            )
-          })}
+          {vaultState === 'unlocked'
+            ? visibleEntries.map((entry) => (
+                <PasswordEntryCard
+                  key={entry.id}
+                  entry={entry}
+                  faviconUrl={getEntryFaviconUrl(entry)}
+                  passwordValue={revealedIds[entry.id] ?? '••••••••••••'}
+                  isRevealed={Boolean(revealedIds[entry.id])}
+                  isCopied={Boolean(copiedIds[entry.id])}
+                  isDecrypting={Boolean(decryptingIds[entry.id])}
+                  onToggleReveal={handleToggleReveal}
+                  onEdit={openEditEntry}
+                  onCopy={() => {
+                    void handleCopy(entry.id)
+                  }}
+                />
+              ))
+            : null}
         </div>
 
         <div className="col-span-12 space-y-6 lg:col-span-4">
           <SecurityHealthCard
-            securePercent={strengthSummary.securePercent}
-            strong={strengthSummary.strong}
-            fair={strengthSummary.fair}
-            weak={strengthSummary.weak}
-            total={strengthSummary.total}
+            status={health.status}
+            percentage={health.percentage}
+            secure={health.secure}
+            fair={health.fair}
+            atRisk={health.atRisk}
           />
 
           <PasswordGeneratorCard
             generatedPassword={generatedPassword}
-            length={length}
-            includeUpper={includeUpper}
-            includeLower={includeLower}
-            includeNumbers={includeNumbers}
-            includeSymbols={includeSymbols}
-            onLengthChange={setLength}
-            onToggleUpper={() => setIncludeUpper((value) => !value)}
-            onToggleLower={() => setIncludeLower((value) => !value)}
-            onToggleNumbers={() => setIncludeNumbers((value) => !value)}
-            onToggleSymbols={() => setIncludeSymbols((value) => !value)}
+            length={genLength}
+            includeUpper={useUpper}
+            includeNumbers={useNumbers}
+            includeSymbols={useSymbols}
+            onLengthChange={setGenLength}
+            onToggleUpper={() => handleToggleOption('upper')}
+            onToggleNumbers={() => handleToggleOption('numbers')}
+            onToggleSymbols={() => handleToggleOption('symbols')}
             onRegenerate={() => {
-              setGeneratedPassword(
-                generatePassword({
-                  length,
-                  includeUpper,
-                  includeLower,
-                  includeNumbers,
-                  includeSymbols,
-                }),
-              )
+              setGeneratedPassword(generatePassword(genLength, useUpper, useNumbers, useSymbols))
             }}
-            onApplyToVault={() => openComposer(generatedPassword)}
-            isUnlocked={vaultState === 'unlocked'}
+            onApplyToVault={() => {
+              if (vaultState !== 'unlocked') {
+                return
+              }
+
+              openAddEntry(generatedPassword)
+            }}
+            applyTooltip={vaultState !== 'unlocked' ? 'Unlock vault first' : 'Apply to Vault'}
           />
 
           <section className="relative h-44 overflow-hidden rounded-xl">
@@ -292,34 +412,47 @@ export function PasswordsPage() {
               className="h-full w-full object-cover"
             />
             <div className="absolute inset-0 bg-linear-to-t from-black/65 to-transparent p-5">
-              <p className="mt-auto text-xs italic text-white">Safety is not the absence of threat, but the presence of serenity.</p>
+              <p className="mt-auto text-xs italic text-white">{pinnedQuote?.quoteText ?? FALLBACK_QUOTE}</p>
+              {pinnedQuote?.attribution ? <p className="mt-1 text-[10px] text-white/90">{pinnedQuote.attribution}</p> : null}
             </div>
           </section>
         </div>
       </section>
 
-      <PasswordEntryModal
-        isMounted={isComposerMounted && vaultState === 'unlocked'}
-        isVisible={isComposerVisible}
-        draftEntry={draftEntry}
-        onDraftChange={handleDraftChange}
-        onClose={closeComposer}
-        onSave={handleSaveDraft}
+      <AddEntryModal
+        isOpen={showAddEntry && vaultState === 'unlocked'}
+        editingEntry={editingEntry}
+        prefillPassword={prefillPassword}
+        isSaving={isSavingEntry}
+        onClose={() => {
+          setShowAddEntry(false)
+          setEditingEntry(null)
+          setPrefillPassword('')
+        }}
+        onSave={handleSaveEntry}
       />
 
       <VaultLockOverlay
-        isLocked={vaultState === 'locked'}
-        showMasterPasswordInput={showMasterPasswordInput}
-        masterPasswordInput={masterPasswordInput}
-        unlockError={unlockError}
-        onMasterPasswordInputChange={setMasterPasswordInput}
-        onUnlock={handleUnlock}
-        onToggleMasterPasswordInput={() => setShowMasterPasswordInput((value) => !value)}
+        vaultState={vaultState}
+        setupMasterPassword={setupMasterPassword}
+        confirmMasterPassword={confirmMasterPassword}
+        unlockPassword={unlockPassword}
+        errorText={unlockError}
+        isSubmitting={isSubmittingVault}
+        onSetupMasterPasswordChange={setSetupMasterPassword}
+        onConfirmMasterPasswordChange={setConfirmMasterPassword}
+        onUnlockPasswordChange={setUnlockPassword}
+        onSetupSubmit={() => {
+          void handleSetupSubmit()
+        }}
+        onUnlockSubmit={() => {
+          void handleUnlockSubmit()
+        }}
       />
 
-      {strengthSummary.weak > 0 && vaultState === 'unlocked' && (
+      {atRisk > 0 && vaultState === 'unlocked' && (
         <div className="fixed bottom-6 right-6 z-30 inline-flex items-center gap-2 rounded-full bg-error-container px-4 py-2 text-xs font-bold text-error shadow-lg">
-          <ShieldAlert size={14} /> {strengthSummary.weak} weak credentials detected
+          <ShieldAlert size={14} /> {atRisk} weak credential{atRisk > 1 ? 's' : ''} detected
         </div>
       )}
     </div>

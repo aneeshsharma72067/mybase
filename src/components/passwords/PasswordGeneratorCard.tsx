@@ -4,34 +4,30 @@ interface PasswordGeneratorCardProps {
   generatedPassword: string
   length: number
   includeUpper: boolean
-  includeLower: boolean
   includeNumbers: boolean
   includeSymbols: boolean
   onLengthChange: (value: number) => void
   onToggleUpper: () => void
-  onToggleLower: () => void
   onToggleNumbers: () => void
   onToggleSymbols: () => void
   onRegenerate: () => void
   onApplyToVault: () => void
-  isUnlocked: boolean
+  applyTooltip: string
 }
 
 export function PasswordGeneratorCard({
   generatedPassword,
   length,
   includeUpper,
-  includeLower,
   includeNumbers,
   includeSymbols,
   onLengthChange,
   onToggleUpper,
-  onToggleLower,
   onToggleNumbers,
   onToggleSymbols,
   onRegenerate,
   onApplyToVault,
-  isUnlocked,
+  applyTooltip,
 }: PasswordGeneratorCardProps) {
   return (
     <section className="relative overflow-hidden rounded-xl bg-primary p-6 text-on-primary">
@@ -71,7 +67,7 @@ export function PasswordGeneratorCard({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-2 text-xs font-bold">
+          <div className="grid grid-cols-3 gap-2 text-xs font-bold">
             <button
               type="button"
               onClick={onToggleUpper}
@@ -81,16 +77,6 @@ export function PasswordGeneratorCard({
               ].join(' ')}
             >
               ABC
-            </button>
-            <button
-              type="button"
-              onClick={onToggleLower}
-              className={[
-                'rounded-full px-3 py-2 transition-colors',
-                includeLower ? 'bg-primary-container text-on-primary-container' : 'bg-primary-dim/50 text-on-primary',
-              ].join(' ')}
-            >
-              abc
             </button>
             <button
               type="button"
@@ -118,7 +104,7 @@ export function PasswordGeneratorCard({
             type="button"
             onClick={onApplyToVault}
             className="w-full rounded-full bg-on-primary px-4 py-3 font-bold text-primary transition-colors hover:bg-primary-fixed"
-            disabled={!isUnlocked}
+            title={applyTooltip}
           >
             Apply to Vault
           </button>

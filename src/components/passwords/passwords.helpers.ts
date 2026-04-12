@@ -1,5 +1,4 @@
 import { Mail, Shield, ShoppingCart, Trees, type LucideIcon } from 'lucide-react'
-import type { PasswordEntry } from '../../types/password.types'
 
 export type PasswordStrength = 'strong' | 'fair' | 'weak'
 
@@ -26,37 +25,6 @@ export const initialDraftEntry: DraftPasswordEntry = {
   url: '',
   notes: '',
 }
-
-export const seedVault: Array<Omit<PasswordEntry, 'id' | 'createdAt'>> = [
-  {
-    label: 'ProtonMail',
-    username: 'alara.woods@proton.me',
-    encryptedPassword: 'F0rest!Bloom#2026',
-    url: 'https://mail.proton.me',
-    notes: 'Secure email',
-  },
-  {
-    label: 'DigitalOcean',
-    username: 'dev_admin_root',
-    encryptedPassword: 'Dock3r_Cloud_9',
-    url: 'https://cloud.digitalocean.com',
-    notes: 'Infrastructure',
-  },
-  {
-    label: 'Amazon',
-    username: 'alara.woods@gmail.com',
-    encryptedPassword: 'amaz0n',
-    url: 'https://amazon.com',
-    notes: 'Shopping',
-  },
-  {
-    label: 'Outdoor Inc.',
-    username: 'hiking_pro_2024',
-    encryptedPassword: 'Moss&Trail_88#',
-    url: 'https://example.com/outdoor',
-    notes: 'Gear portal',
-  },
-]
 
 export function scorePassword(password: string): PasswordStrength {
   const hasUpper = /[A-Z]/.test(password)
