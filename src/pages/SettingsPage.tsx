@@ -178,57 +178,11 @@ export function SettingsPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between rounded-xl border border-outline-variant/20 bg-surface p-4">
-              <div>
-                <p className="font-bold text-on-surface">Border Style</p>
-                <p className="text-xs text-on-surface-variant">Choose the visual corner style for settings surfaces.</p>
-              </div>
-              <div className="flex items-center gap-1 rounded-full bg-secondary-container/30 p-1">
-                {([['smooth', 'Smooth'], ['sharp', 'Sharp']] as const).map(([value, label]) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => updateDraft({ borderStyle: value as SettingsBorderStyle })}
-                    className={[
-                      'rounded-full px-4 py-1.5 text-xs font-bold transition-colors',
-                      draft.borderStyle === value
-                        ? 'bg-surface-container-lowest text-primary shadow-sm'
-                        : 'text-on-surface-variant hover:text-on-surface',
-                    ].join(' ')}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
+           
           </div>
         </SettingsSection>
 
-        <SettingsSection title="Preferences" icon={SlidersHorizontal} tone="tertiary">
-          <div className="space-y-6">
-            <SettingsSwitchRow
-              title="Enable Notifications"
-              description="Get alerts for goals and upcoming todo items"
-              checked={draft.notificationsEnabled}
-              onChange={(checked) => updateDraft({ notificationsEnabled: checked })}
-            />
-
-            <div className="border-t border-outline-variant/20 pt-6">
-              <label className="mb-3 block text-sm font-bold text-on-surface-variant">Default Landing Page</label>
-              <select
-                value={draft.defaultLandingPage}
-                onChange={(event) => updateDraft({ defaultLandingPage: event.target.value as SettingsLandingPage })}
-                className="w-full rounded-xl border border-outline-variant/50 bg-surface px-4 py-3 text-on-surface outline-none transition-colors focus:border-primary"
-              >
-                {landingOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </SettingsSection>
+       
 
         <SettingsSection title="Security" icon={Shield} tone="error">
           <div className="space-y-8">

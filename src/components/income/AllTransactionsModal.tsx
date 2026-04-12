@@ -7,9 +7,18 @@ interface AllTransactionsModalProps {
   isVisible: boolean
   transactions: Transaction[]
   onClose: () => void
+  onEditTransaction?: (transaction: Transaction) => void
+  onDeleteTransaction?: (transaction: Transaction) => void
 }
 
-export function AllTransactionsModal({ isMounted, isVisible, transactions, onClose }: AllTransactionsModalProps) {
+export function AllTransactionsModal({
+  isMounted,
+  isVisible,
+  transactions,
+  onClose,
+  onEditTransaction,
+  onDeleteTransaction,
+}: AllTransactionsModalProps) {
   if (!isMounted) {
     return null
   }
@@ -24,7 +33,7 @@ export function AllTransactionsModal({ isMounted, isVisible, transactions, onClo
     >
       <div
         className={[
-          'h-[86vh] w-full max-w-6xl overflow-hidden rounded-[2rem] bg-surface-container-lowest shadow-2xl transition-all duration-220',
+          'h-[86vh] w-full max-w-6xl overflow-hidden rounded-4xl bg-surface-container-lowest shadow-2xl transition-all duration-220',
           isVisible ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-4 scale-95 opacity-0',
         ].join(' ')}
         onClick={(event) => event.stopPropagation()}
@@ -42,7 +51,12 @@ export function AllTransactionsModal({ isMounted, isVisible, transactions, onClo
         </div>
 
         <div className="h-[calc(86vh-74px)] overflow-y-auto p-6">
-          <RecentTransactionsTable transactions={transactions} showViewAll={false} />
+          <RecentTransactionsTable
+            transactions={transactions}
+            showViewAll={false}
+            onEditTransaction={onEditTransaction}
+            onDeleteTransaction={onDeleteTransaction}
+          />
         </div>
       </div>
     </div>

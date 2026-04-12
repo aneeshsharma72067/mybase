@@ -1,18 +1,13 @@
 export type TransactionType = 'income' | 'expense'
 
-export type Category = string
-
 export interface Transaction {
   id: string
   type: TransactionType
   amount: number
-  category: Category
-  label: string
+  description: string
+  category: string
   date: string
   notes?: string
-}
-
-export interface IncomeStoreState {
-  transactions: Transaction[]
-  categories: string[]
+  createdAt: string
+  updatedAt: string
 }

@@ -1,14 +1,15 @@
 import { ArrowDownRight, ArrowUpRight, Leaf, PiggyBank } from 'lucide-react'
-import { formatCurrency } from './income.helpers'
+import { formatCurrency } from '../../store/useIncomeStore'
 
 interface IncomeSummaryCardsProps {
   totalIncome: number
   totalExpenses: number
   netSavings: number
   savingsRate: number
+  savingsStatus: string
 }
 
-export function IncomeSummaryCards({ totalIncome, totalExpenses, netSavings, savingsRate }: IncomeSummaryCardsProps) {
+export function IncomeSummaryCards({ totalIncome, totalExpenses, netSavings, savingsRate, savingsStatus }: IncomeSummaryCardsProps) {
   return (
     <section className="grid grid-cols-1 gap-6 md:grid-cols-4">
       <div className="rounded-3xl border border-primary/10 bg-surface-container-lowest p-6">
@@ -33,14 +34,14 @@ export function IncomeSummaryCards({ totalIncome, totalExpenses, netSavings, sav
         </span>
         <p className="text-sm font-medium opacity-80">Net Savings</p>
         <h3 className="mt-1 text-2xl font-bold">{formatCurrency(netSavings)}</h3>
-        <p className="mt-4 text-xs font-bold opacity-90">Healthy growth</p>
+        <p className="mt-4 text-xs font-bold opacity-90">{savingsStatus}</p>
       </div>
       <div className="rounded-3xl border border-primary/10 bg-surface-container-lowest p-6">
         <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-tertiary-container text-tertiary">
           <PiggyBank size={16} />
         </span>
         <p className="text-sm font-medium text-on-surface-variant">Savings Rate</p>
-        <h3 className="mt-1 text-2xl font-bold text-tertiary">{savingsRate.toFixed(1)}%</h3>
+        <h3 className="mt-1 text-2xl font-bold text-tertiary">{savingsRate}%</h3>
         <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-surface-container">
           <div className="h-full rounded-full bg-tertiary" style={{ width: `${Math.min(Math.max(savingsRate, 0), 100)}%` }} />
         </div>
