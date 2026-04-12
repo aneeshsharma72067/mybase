@@ -1,11 +1,12 @@
-import { KeyRound, Palette, Shield, SlidersHorizontal, User } from 'lucide-react'
+import { KeyRound, Palette, Shield, User } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { ChangeMasterPasswordModal } from '../components/settings/ChangeMasterPasswordModal'
 import { SettingsHeader } from '../components/settings/SettingsHeader'
 import { SettingsSection } from '../components/settings/SettingsSection'
-import { SettingsSwitchRow } from '../components/settings/SettingsSwitchRow'
 import { applyAccent, applyBorderStyle, applyTheme } from '../lib/settingsAppearance'
+import { usePasswordStore } from '../store/usePasswordStore'
 import { useSettingsStore } from '../store/useSettingsStore'
-import type { SettingsAccent, SettingsBorderStyle, SettingsLandingPage, UserSettings } from '../types/settings.types'
+import type { SettingsAccent, UserSettings } from '../types/settings.types'
 
 const accentMap: Record<SettingsAccent, { label: string; color: string }> = {
   primary: { label: 'Forest Green', color: '#3f6754' },
@@ -14,17 +15,6 @@ const accentMap: Record<SettingsAccent, { label: string; color: string }> = {
   orange: { label: 'Warm Orange', color: '#b76a2d' },
   blue: { label: 'Calm Blue', color: '#2f5fa8' },
 }
-
-const landingOptions: Array<{ value: SettingsLandingPage; label: string }> = [
-  { value: 'dashboard', label: 'Dashboard' },
-  { value: 'thoughts', label: 'Thoughts' },
-  { value: 'goals', label: 'Goals' },
-  { value: 'todos', label: 'Todo List' },
-  { value: 'bookmarks', label: 'Bookmarks' },
-  { value: 'passwords', label: 'Passwords' },
-  { value: 'income', label: 'Income' },
-  { value: 'settings', label: 'Settings' },
-]
 
 const autoLockOptions: Array<{ label: string; value: UserSettings['autoLockMinutes'] }> = [
   { label: '5 Minutes', value: 5 },
@@ -36,8 +26,13 @@ const autoLockOptions: Array<{ label: string; value: UserSettings['autoLockMinut
 export function SettingsPage() {
   const savedSettings = useSettingsStore((state) => state.settings)
   const setSettings = useSettingsStore((state) => state.setSettings)
+  const changeMasterPassword = usePasswordStore((state) => state.changeMasterPassword)
+  const vaultMeta = usePasswordStore((state) => state.meta)
   const [draft, setDraft] = useState(savedSettings)
   const [statusText, setStatusText] = useState('Adjust your setup and save when ready')
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
+  const [changePasswordError, setChangePasswordError] = useState('')
 
   useEffect(() => {
     setDraft(savedSettings)
@@ -81,6 +76,45 @@ export function SettingsPage() {
   function handleDiscard() {
     setDraft(savedSettings)
     setStatusText('Changes discarded')
+  }
+
+  function openChangePasswordModal() {
+    setChangePasswordError('')
+    setIsChangePasswordOpen(true)
+  }
+
+  function closeChangePasswordModal() {
+    if (isUpdatingPassword) {
+      return
+    }
+
+    setIsChangePasswordOpen(false)
+    setChangePasswordError('')
+  }
+
+  async function handleChangeMasterPassword(currentPassword: string, nextPassword: string) {
+    setChangePasswordError('')
+
+    if (!vaultMeta) {
+      setChangePasswordError('Initialize your vault in Passwords before changing the master password.')
+      return
+    }
+
+    setIsUpdatingPassword(true)
+
+    try {
+      const changed = await changeMasterPassword(currentPassword, nextPassword)
+
+      if (!changed) {
+        setChangePasswordError('Current password is incorrect.')
+        return
+      }
+
+      setIsChangePasswordOpen(false)
+      setStatusText('Master password updated')
+    } finally {
+      setIsUpdatingPassword(false)
+    }
   }
 
   return (
@@ -193,7 +227,7 @@ export function SettingsPage() {
               </div>
               <button
                 type="button"
-                onClick={() => setStatusText('Password rotation flow opened')}
+                onClick={openChangePasswordModal}
                 className="inline-flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-6 py-3 font-bold text-on-surface hover:bg-surface-container"
               >
                 <KeyRound size={16} />
@@ -240,6 +274,14 @@ export function SettingsPage() {
           </button>
         </div>
       </div>
+
+      <ChangeMasterPasswordModal
+        isOpen={isChangePasswordOpen}
+        isSaving={isUpdatingPassword}
+        errorText={changePasswordError}
+        onClose={closeChangePasswordModal}
+        onSubmit={handleChangeMasterPassword}
+      />
     </div>
   )
 }

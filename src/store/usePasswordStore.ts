@@ -6,8 +6,10 @@ import { generateId } from '../lib/utils'
 import {
   createVerificationToken,
   decryptEntry,
+  decryptText,
   deriveKey,
   encryptEntry,
+  encryptText,
   generateSalt,
   saltFromBase64,
   verifyToken,
@@ -42,6 +44,7 @@ type UpdateEntryInput = {
 type PasswordStoreActions = {
   setupVault: (masterPassword: string) => Promise<void>
   unlockVault: (masterPassword: string) => Promise<boolean>
+  changeMasterPassword: (currentPassword: string, nextPassword: string) => Promise<boolean>
   lockVault: () => void
   addEntry: (plain: AddEntryInput) => Promise<void>
   updateEntry: (id: string, plain: UpdateEntryInput) => Promise<void>
@@ -210,6 +213,76 @@ export const usePasswordStore = create<PasswordStore>()(
           state.vaultState = 'unlocked'
         })
 
+        return true
+      },
+      changeMasterPassword: async (currentPassword, nextPassword) => {
+        const { meta, entries } = get()
+
+        if (!meta) {
+          return false
+        }
+
+        const currentKey = await deriveKey(currentPassword, saltFromBase64(meta.salt))
+        const isCurrentPasswordValid = await verifyToken(meta.verificationToken, currentKey)
+
+        if (!isCurrentPasswordValid) {
+          return false
+        }
+
+        const nextSalt = await generateSalt()
+        const nextKey = await deriveKey(nextPassword, saltFromBase64(nextSalt))
+        const nextVerificationToken = await createVerificationToken(nextKey)
+
+        const reencryptedEntries = await Promise.all(
+          entries.map(async (entry) => {
+            if (!entry.ciphertext || !entry.iv) {
+              return {
+                id: entry.id,
+                ciphertext: entry.ciphertext,
+                iv: entry.iv,
+              }
+            }
+
+            const plainPassword = await decryptText(entry.ciphertext, entry.iv, currentKey)
+            const encrypted = await encryptText(plainPassword, nextKey)
+
+            return {
+              id: entry.id,
+              ciphertext: encrypted.ciphertext,
+              iv: encrypted.iv,
+            }
+          }),
+        )
+
+        const encryptedById = new Map(
+          reencryptedEntries.map((entry) => [entry.id, { ciphertext: entry.ciphertext, iv: entry.iv }]),
+        )
+
+        set((state) => {
+          state.meta = {
+            salt: nextSalt,
+            verificationToken: nextVerificationToken,
+          }
+
+          state.entries = state.entries.map((entry) => {
+            const encrypted = encryptedById.get(entry.id)
+
+            if (!encrypted) {
+              return entry
+            }
+
+            return {
+              ...entry,
+              ciphertext: encrypted.ciphertext,
+              iv: encrypted.iv,
+              updatedAt: new Date().toISOString(),
+            }
+          })
+
+          state.vaultState = 'unlocked'
+        })
+
+        activeKey = nextKey
         return true
       },
       lockVault: () => {
