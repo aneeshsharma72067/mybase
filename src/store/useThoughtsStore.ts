@@ -12,6 +12,8 @@ type ThoughtsStoreActions = {
   deleteThought: (id: string) => void
   togglePin: (id: string) => void
   setActiveThought: (id: string | null) => void
+  setTagFilter: (tag: string | null) => void
+  setDateFilter: (date: string | null) => void
 }
 
 export type ThoughtsStore = ThoughtStoreState & ThoughtsStoreActions
@@ -79,6 +81,8 @@ function normalizeTitleForAdd(payload: Omit<Thought, 'id' | 'createdAt' | 'updat
 const initialState: ThoughtStoreState = {
   thoughts: seedThoughts,
   activeThoughtId: null,
+  activeTagFilter: null,
+  activeDateFilter: null,
 }
 
 export const useThoughtsStore = create<ThoughtsStore>()(
@@ -132,6 +136,16 @@ export const useThoughtsStore = create<ThoughtsStore>()(
           state.activeThoughtId = id
         })
       },
+      setTagFilter: (tag) => {
+        set((state) => {
+          state.activeTagFilter = state.activeTagFilter === tag ? null : tag
+        })
+      },
+      setDateFilter: (date) => {
+        set((state) => {
+          state.activeDateFilter = date
+        })
+      },
     })),
     {
       name: 'mybase-thoughts',
@@ -139,6 +153,8 @@ export const useThoughtsStore = create<ThoughtsStore>()(
       partialize: (state) => ({
         thoughts: state.thoughts,
         activeThoughtId: state.activeThoughtId,
+        activeTagFilter: state.activeTagFilter,
+        activeDateFilter: state.activeDateFilter,
       }),
     },
   ),
@@ -158,4 +174,21 @@ export function getAllTags(thoughts: Thought[]): string[] {
 
 export function getDraftThoughts(thoughts: Thought[]): Thought[] {
   return thoughts.filter((thought) => thought.type === 'braindump' && thought.isDraft)
+}
+
+export function getFilteredThoughts(thoughts: Thought[], tagFilter: string | null, dateFilter: string | null): Thought[] {
+  const filtered = thoughts.filter((thought) => {
+    const tagMatch = !tagFilter || thought.tags.includes(tagFilter)
+    const dateMatch = !dateFilter || thought.createdAt.startsWith(dateFilter)
+
+    return tagMatch && dateMatch
+  })
+
+  return [...filtered].sort((left, right) => {
+    if (left.isPinned !== right.isPinned) {
+      return left.isPinned ? -1 : 1
+    }
+
+    return right.createdAt.localeCompare(left.createdAt)
+  })
 }

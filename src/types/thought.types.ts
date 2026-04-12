@@ -23,4 +23,6 @@ export interface Thought {
 export interface ThoughtStoreState {
   thoughts: Thought[]
   activeThoughtId: string | null
+  activeTagFilter: string | null
+  activeDateFilter: string | null
 }

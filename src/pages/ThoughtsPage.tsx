@@ -9,13 +9,7 @@ import { ThoughtHeroCard } from '../components/thoughts/ThoughtHeroCard'
 import { ThoughtInsightCard } from '../components/thoughts/ThoughtInsightCard'
 import { ThoughtsHeader } from '../components/thoughts/ThoughtsHeader'
 import { ThoughtQuoteCard } from '../components/thoughts/ThoughtQuoteCard'
-import {
-  getAllTags,
-  getDraftThoughts,
-  getPinnedThoughts,
-  getThoughtsByTag,
-  useThoughtsStore,
-} from '../store/useThoughtsStore'
+import { getFilteredThoughts, useThoughtsStore } from '../store/useThoughtsStore'
 import type { Thought } from '../types/thought.types'
 
 const heroImage =
@@ -40,77 +34,87 @@ function getThoughtBody(thought: Thought): string {
 }
 
 export function ThoughtsPage() {
-  const { thoughts, activeThoughtId, setActiveThought } = useThoughtsStore()
+  const {
+    thoughts,
+    activeThoughtId,
+    activeTagFilter,
+    activeDateFilter,
+    setActiveThought,
+    setTagFilter,
+    setDateFilter,
+  } = useThoughtsStore()
   const [searchValue, setSearchValue] = useState('')
-  const [activeTag, setActiveTag] = useState<string | null>(null)
-  const [mode, setMode] = useState<'month' | 'year'>('month')
   const [statusText, setStatusText] = useState('Ready to capture thoughts')
 
-  const tags = useMemo(() => getAllTags(thoughts), [thoughts])
-  const pinnedThoughts = useMemo(() => getPinnedThoughts(thoughts), [thoughts])
-  const draftThoughts = useMemo(() => getDraftThoughts(thoughts), [thoughts])
-
-  const heroThought = useMemo(() => pinnedThoughts[0] ?? thoughts[0] ?? null, [pinnedThoughts, thoughts])
-
-  const activeThought = useMemo(
-    () => thoughts.find((thought) => thought.id === activeThoughtId) ?? undefined,
-    [activeThoughtId, thoughts],
+  const filteredThoughts = useMemo(
+    () => getFilteredThoughts(thoughts, activeTagFilter, activeDateFilter),
+    [activeDateFilter, activeTagFilter, thoughts],
   )
 
-  const filteredFeedThoughts = useMemo(() => {
-    let filtered = heroThought ? thoughts.filter((thought) => thought.id !== heroThought.id) : thoughts
-
-    if (activeTag) {
-      filtered = getThoughtsByTag(filtered, activeTag)
-    }
-
+  const displayedThoughts = useMemo(() => {
     const query = searchValue.trim().toLowerCase()
 
     if (!query) {
-      return filtered
+      return filteredThoughts
     }
 
-    return filtered.filter((thought) => {
-      const haystack = [
-        thought.title,
-        thought.body,
-        thought.quoteText,
-        thought.attribution,
-        thought.tags.join(' '),
-      ]
+    return filteredThoughts.filter((thought) => {
+      const haystack = [thought.title, thought.body, thought.quoteText, thought.attribution, thought.tags.join(' ')]
         .filter(Boolean)
         .join(' ')
         .toLowerCase()
 
       return haystack.includes(query)
     })
-  }, [activeTag, heroThought, searchValue, thoughts])
+  }, [filteredThoughts, searchValue])
 
-  const summary = useMemo(() => {
-    if (activeTag) {
-      return `Filtering by ${activeTag}`
+  const heroThought = useMemo(() => displayedThoughts[0] ?? null, [displayedThoughts])
+
+  const activeThought = useMemo(
+    () => thoughts.find((thought) => thought.id === activeThoughtId) ?? undefined,
+    [activeThoughtId, thoughts],
+  )
+
+  const filterSummary = useMemo(() => {
+    const parts: string[] = []
+
+    if (activeTagFilter) {
+      parts.push(`#${activeTagFilter}`)
+    }
+
+    if (activeDateFilter) {
+      parts.push(format(new Date(activeDateFilter), 'MMM d, yyyy'))
+    }
+
+    if (parts.length === 0) {
+      return 'All reflections'
+    }
+
+    return `Filtered by: ${parts.join(' · ')}`
+  }, [activeDateFilter, activeTagFilter])
+
+  const visibleFeedThoughts = heroThought ? displayedThoughts.slice(1) : displayedThoughts
+
+  const emptyStateMessage = useMemo(() => {
+    if (activeDateFilter) {
+      return `No thoughts recorded on ${format(new Date(activeDateFilter), 'MMM d, yyyy')}.`
+    }
+
+    if (activeTagFilter) {
+      return `No thoughts match #${activeTagFilter}.`
     }
 
     if (searchValue.trim()) {
-      return `Search: ${searchValue}`
+      return 'No matching thoughts yet.'
     }
 
-    return 'All reflections'
-  }, [activeTag, searchValue])
+    return 'No thoughts yet. Add your first one.'
+  }, [activeDateFilter, activeTagFilter, searchValue])
 
-  const consistencyProgress = Math.min(100, thoughts.length * 18)
-
-  const consistencySummary = useMemo(() => {
-    if (thoughts.length === 0) {
-      return 'Start your first reflection to begin your streak.'
-    }
-
-    if (draftThoughts.length > 0) {
-      return `You have ${draftThoughts.length} draft ${draftThoughts.length === 1 ? 'thought' : 'thoughts'} waiting to be finished.`
-    }
-
-    return `You captured ${thoughts.length} thoughts recently. Keep the reflection rhythm going.`
-  }, [draftThoughts.length, thoughts.length])
+  function clearFilters() {
+    setTagFilter(null)
+    setDateFilter(null)
+  }
 
   return (
     <div className="mx-auto w-full max-w-400">
@@ -126,6 +130,15 @@ export function ThoughtsPage() {
         onOpenNotifications={() => setStatusText('Notifications checked')}
         statusText={statusText}
       />
+
+      {(activeTagFilter || activeDateFilter) && (
+        <div className="mb-6 flex items-center justify-between gap-4 rounded-full border border-outline-variant/60 bg-surface-container-lowest px-4 py-2 text-xs text-on-surface-variant">
+          <span>{filterSummary}</span>
+          <button type="button" onClick={clearFilters} className="font-semibold text-primary hover:underline">
+            Clear filters
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-12 gap-6 lg:gap-8">
         <div className="col-span-12 space-y-6 lg:col-span-9 lg:space-y-8">
@@ -156,19 +169,19 @@ export function ThoughtsPage() {
                 />
               ) : null}
 
-              {filteredFeedThoughts.length === 0 ? (
+              {displayedThoughts.length === 0 ? (
                 <div className="rounded-xl bg-surface-container-lowest p-10 text-center text-on-surface-variant">
-                  No thoughts match this filter.
+                  {emptyStateMessage}
                 </div>
-              ) : (
+              ) : visibleFeedThoughts.length > 0 ? (
                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-                  {filteredFeedThoughts.map((thought) =>
+                  {visibleFeedThoughts.map((thought) =>
                     thought.type === 'quote' ? (
                       <ThoughtQuoteCard
                         key={thought.id}
                         quote={thought.quoteText?.trim() || 'No quote text yet.'}
                         authorLabel={thought.attribution?.trim() || 'Unknown'}
-                        note={summary}
+                        note={filterSummary}
                         dateLabel={format(new Date(thought.createdAt), 'MMM d')}
                         tags={thought.tags}
                       />
@@ -183,27 +196,17 @@ export function ThoughtsPage() {
                     ),
                   )}
                 </div>
-              )}
+              ) : null}
             </>
           )}
 
-          <ClarityChartCard mode={mode} onModeChange={setMode} />
+          <ClarityChartCard />
         </div>
 
         <aside className="col-span-12 space-y-6 lg:col-span-3 lg:space-y-8">
-          <ThoughtCalendarCard
-            initialDate={new Date()}
-            onDateSelect={(date) => setStatusText(`Selected ${format(date, 'MMM d, yyyy')}`)}
-          />
-          <ThoughtCloudCard
-            tags={tags}
-            activeTag={activeTag}
-            onTagChange={(tag) => setActiveTag((current) => (current === tag ? null : tag))}
-          />
-          <ConsistencyCard
-            progress={consistencyProgress}
-            summary={consistencySummary}
-          />
+          <ThoughtCalendarCard onDateSelect={(date) => setStatusText(`Selected ${format(date, 'MMM d, yyyy')}`)} />
+          <ThoughtCloudCard />
+          <ConsistencyCard />
         </aside>
       </div>
 

@@ -4,28 +4,34 @@ import {
   endOfMonth,
   endOfWeek,
   format,
-  isSameDay,
   isSameMonth,
   isToday,
   startOfMonth,
   startOfWeek,
   subMonths,
 } from 'date-fns'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useThoughtsStore } from '../../store/useThoughtsStore'
 
 interface ThoughtCalendarCardProps {
-  initialDate?: Date
   onDateSelect?: (date: Date) => void
 }
 
 const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
-export function ThoughtCalendarCard({ initialDate = new Date(), onDateSelect }: ThoughtCalendarCardProps) {
-  const [visibleMonth, setVisibleMonth] = useState(startOfMonth(initialDate))
-  const [selectedDate, setSelectedDate] = useState(initialDate)
+export function ThoughtCalendarCard({ onDateSelect }: ThoughtCalendarCardProps) {
+  const { thoughts, activeDateFilter, setDateFilter } = useThoughtsStore()
+  const [visibleMonth, setVisibleMonth] = useState(startOfMonth(new Date()))
+  const currentDate = new Date()
+  const currentYear = currentDate.getFullYear()
+  const currentMonth = currentDate.getMonth()
 
   const monthLabel = format(visibleMonth, 'MMMM yyyy')
+
+  const thoughtsByDate = useMemo(() => {
+    return new Set(thoughts.map((thought) => thought.createdAt.slice(0, 10)))
+  }, [thoughts])
 
   const calendarCells = useMemo(() => {
     const firstDay = startOfWeek(startOfMonth(visibleMonth), { weekStartsOn: 0 })
@@ -34,9 +40,29 @@ export function ThoughtCalendarCard({ initialDate = new Date(), onDateSelect }: 
     return eachDayOfInterval({ start: firstDay, end: lastDay })
   }, [visibleMonth])
 
+  useEffect(() => {
+    if (activeDateFilter) {
+      setVisibleMonth(startOfMonth(new Date(activeDateFilter)))
+    }
+  }, [activeDateFilter, setVisibleMonth])
+
   function handleDateSelect(date: Date) {
-    setSelectedDate(date)
+    const dateKey = format(date, 'yyyy-MM-dd')
+
+    setDateFilter(activeDateFilter === dateKey ? null : dateKey)
     onDateSelect?.(date)
+  }
+
+  function goToPreviousMonth() {
+    setVisibleMonth((current) => subMonths(current, 1))
+  }
+
+  function goToNextMonth() {
+    if (visibleMonth.getFullYear() === currentYear && visibleMonth.getMonth() >= currentMonth) {
+      return
+    }
+
+    setVisibleMonth((current) => addMonths(current, 1))
   }
 
   return (
@@ -46,7 +72,7 @@ export function ThoughtCalendarCard({ initialDate = new Date(), onDateSelect }: 
         <div className="flex gap-1">
           <button
             type="button"
-            onClick={() => setVisibleMonth((current) => subMonths(current, 1))}
+            onClick={goToPreviousMonth}
             className="rounded-full p-1 hover:bg-surface-container-low"
             aria-label="Previous month"
           >
@@ -54,8 +80,9 @@ export function ThoughtCalendarCard({ initialDate = new Date(), onDateSelect }: 
           </button>
           <button
             type="button"
-            onClick={() => setVisibleMonth((current) => addMonths(current, 1))}
-            className="rounded-full p-1 hover:bg-surface-container-low"
+            onClick={goToNextMonth}
+            disabled={visibleMonth.getFullYear() === currentYear && visibleMonth.getMonth() >= currentMonth}
+            className="rounded-full p-1 hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="Next month"
           >
             <ChevronRight size={14} />
@@ -81,15 +108,18 @@ export function ThoughtCalendarCard({ initialDate = new Date(), onDateSelect }: 
               handleDateSelect(date)
             }}
             className={[
-              'mx-auto inline-flex h-7 w-7 items-center justify-center rounded-full transition-colors',
+              'mx-auto inline-flex h-7 w-7 flex-col items-center justify-center rounded-full leading-none transition-colors',
               isSameMonth(date, visibleMonth) ? 'text-on-surface' : 'text-outline-variant',
               isToday(date) ? 'bg-primary-container text-primary font-bold' : '',
-              isSameDay(date, selectedDate) ? 'border-2 border-primary font-black text-primary' : '',
-              !isToday(date) && !isSameDay(date, selectedDate) ? 'hover:bg-surface-container-low' : '',
+              !isToday(date) && activeDateFilter === format(date, 'yyyy-MM-dd') ? 'border-2 border-primary font-black text-primary' : '',
+              !isToday(date) && activeDateFilter !== format(date, 'yyyy-MM-dd') ? 'hover:bg-surface-container-low' : '',
             ].join(' ')}
             aria-label={format(date, 'EEEE, MMMM d, yyyy')}
           >
-            {format(date, 'd')}
+            <span>{format(date, 'd')}</span>
+            {thoughtsByDate.has(format(date, 'yyyy-MM-dd')) ? (
+              <span className="mt-0.5 h-1 w-1 rounded-full bg-primary" aria-hidden="true" />
+            ) : null}
           </button>
         ))}
       </div>
