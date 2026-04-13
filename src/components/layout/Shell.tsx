@@ -9,6 +9,7 @@ import { Sidebar } from './Sidebar'
 const moduleByPath: Record<string, string> = {
   '/': 'dashboard',
   '/dashboard': 'dashboard',
+  '/health': 'health',
   '/thoughts': 'thoughts',
   '/goals': 'goals',
   '/todos': 'todos',

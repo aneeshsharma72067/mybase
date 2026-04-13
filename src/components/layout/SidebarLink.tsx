@@ -13,10 +13,10 @@ export function SidebarLink({ to, label, icon: Icon }: SidebarLinkProps) {
       to={to}
       className={({ isActive }) =>
         [
-          'flex items-center gap-3 rounded-full px-4 py-3 text-sm font-semibold transition-colors',
+          'flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-all',
           isActive
-            ? 'bg-primary-container text-primary'
-            : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface',
+            ? 'border-r-4 border-primary bg-primary/8 text-primary shadow-[0_10px_24px_rgba(0,109,63,0.06)]'
+            : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface',
         ].join(' ')
       }
     >

@@ -27,44 +27,50 @@
 	--spacing: 0.25rem;
 
 	/* Semantic color tokens from Stitch */
-	--color-background: #f9faf6;
-	--color-on-background: #2e3430;
+	--color-background: #f4fcf2;
+	--color-on-background: #161d18;
 
-	--color-surface: #f9faf6;
-	--color-surface-dim: #d6dbd5;
-	--color-surface-bright: #f9faf6;
+	--color-surface: #f4fcf2;
+	--color-surface-dim: #d4dcd3;
+	--color-surface-bright: #f4fcf2;
 	--color-surface-container-lowest: #ffffff;
-	--color-surface-container-low: #f2f4ef;
-	--color-surface-container: #ebefe9;
-	--color-surface-container-high: #e5e9e4;
-	--color-surface-container-highest: #dfe4de;
-	--color-on-surface: #2e3430;
-	--color-on-surface-variant: #5b605c;
-	--color-outline: #767c77;
-	--color-outline-variant: #aeb3ae;
+	--color-surface-container-low: #eef6ec;
+	--color-surface-container: #e8f0e7;
+	--color-surface-container-high: #e2eae1;
+	--color-surface-container-highest: #dde5db;
+	--color-on-surface: #161d18;
+	--color-on-surface-variant: #3c4a40;
+	--color-outline: #6c7b6f;
+	--color-outline-variant: #bbcabd;
 
-	--color-primary: #3f6754;
-	--color-primary-dim: #335b48;
-	--color-primary-container: #c1ecd4;
-	--color-on-primary: #e6ffef;
-	--color-on-primary-container: #325947;
+	--color-primary: #006d3f;
+	--color-primary-dim: #00522e;
+	--color-primary-container: #08bc71;
+	--color-primary-fixed: #6bfdab;
+	--color-primary-fixed-dim: #4ae091;
+	--color-on-primary: #ffffff;
+	--color-on-primary-container: #004425;
 
-	--color-secondary: #40665d;
-	--color-secondary-dim: #345a51;
-	--color-secondary-container: #c2ebe0;
-	--color-on-secondary: #e3fff6;
-	--color-on-secondary-container: #335950;
+	--color-secondary: #366849;
+	--color-secondary-dim: #3a6d4d;
+	--color-secondary-container: #b5ecc5;
+	--color-secondary-fixed: #b8efc8;
+	--color-secondary-fixed-dim: #9dd3ad;
+	--color-on-secondary: #ffffff;
+	--color-on-secondary-container: #3a6d4d;
 
-	--color-tertiary: #2c6a4e;
-	--color-tertiary-dim: #1e5e43;
-	--color-tertiary-container: #b5f6d2;
-	--color-on-tertiary: #e6ffee;
-	--color-on-tertiary-container: #216045;
+	--color-tertiary: #a53a36;
+	--color-tertiary-dim: #852221;
+	--color-tertiary-container: #ff7d75;
+	--color-tertiary-fixed: #ffdad7;
+	--color-tertiary-fixed-dim: #ffb3ad;
+	--color-on-tertiary: #ffffff;
+	--color-on-tertiary-container: #731516;
 
-	--color-error: #a83836;
-	--color-error-container: #fa746f;
-	--color-on-error: #fff7f6;
-	--color-on-error-container: #6e0a12;
+	--color-error: #ba1a1a;
+	--color-error-container: #ffdad6;
+	--color-on-error: #ffffff;
+	--color-on-error-container: #93000a;
 }
 
 :root {

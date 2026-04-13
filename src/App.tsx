@@ -3,6 +3,7 @@ import { Shell } from './components/layout/Shell'
 import { BookmarksPage } from './pages/BookmarksPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { GoalsPage } from './pages/GoalsPage'
+import { HealthPage } from './pages/HealthPage'
 import { HomeRedirectPage } from './pages/HomeRedirectPage'
 import { IncomePage } from './pages/IncomePage'
 import { PasswordsPage } from './pages/PasswordsPage'
@@ -16,6 +17,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <HomeRedirectPage /> },
       { path: 'dashboard', element: <DashboardPage /> },
+      { path: 'health', element: <HealthPage /> },
       { path: 'thoughts', element: <ThoughtsPage /> },
       { path: 'goals', element: <GoalsPage /> },
       { path: 'todos', element: <TodoPage /> },
