@@ -35,7 +35,7 @@ export function ActivityHeatmapCard({ title, subtitle, imageUrl, cells, percenta
         </div>
 
         <div className="flex-1">
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-9 gap-5">
             {cells.map((cell) => (
               <div
                 key={cell.date}

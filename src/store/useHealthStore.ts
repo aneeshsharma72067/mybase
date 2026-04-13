@@ -27,92 +27,14 @@ const initialProfile: HealthProfile = {
   weightUnit: 'kg',
 }
 
-const todayString = format(new Date(), 'yyyy-MM-dd')
-
-function createSeededRandom(seed: number) {
-  let value = seed % 2147483647
-
-  if (value <= 0) {
-    value += 2147483646
-  }
-
-  return () => {
-    value = (value * 16807) % 2147483647
-    return (value - 1) / 2147483646
-  }
-}
-
-function randomInt(random: () => number, min: number, max: number): number {
-  return Math.floor(random() * (max - min + 1)) + min
-}
-
-function randomFrom<T>(random: () => number, values: T[]): T {
-  return values[Math.floor(random() * values.length)]
+const initialState: HealthStoreState = {
+  logs: [],
+  profile: initialProfile,
 }
 
 function roundTo(value: number, decimals: number): number {
-  const factor = Math.pow(10, decimals)
+  const factor = 10 ** decimals
   return Math.round(value * factor) / factor
-}
-
-function createInitialLogs(): DailyLog[] {
-  const random = createSeededRandom(18473)
-  const now = new Date().toISOString()
-  const byDate = new Map<string, DailyLog>()
-
-  const skipCount = randomInt(random, 5, 6)
-  const skippedIndices = new Set<number>()
-
-  while (skippedIndices.size < skipCount) {
-    const next = randomInt(random, 0, 29)
-
-    if (next !== 0) {
-      skippedIndices.add(next)
-    }
-  }
-
-  let rollingWeight = 64.5
-
-  for (let offset = 29; offset >= 0; offset -= 1) {
-    const date = format(subDays(new Date(), offset), 'yyyy-MM-dd')
-
-    if (skippedIndices.has(offset)) {
-      continue
-    }
-
-    rollingWeight = roundTo(rollingWeight + roundTo(random() * 0.6 - 0.3, 1), 1)
-
-    byDate.set(date, {
-      id: uuidv4(),
-      date,
-      steps: randomInt(random, 4000, 14000),
-      weight: rollingWeight,
-      waterGlasses: randomInt(random, 3, 9),
-      sleepHours: randomFrom(random, [6, 6.5, 7, 7.5, 8, 8.5, 9]),
-      energyLevel: randomInt(random, 1, 5) as 1 | 2 | 3 | 4 | 5,
-      createdAt: now,
-      updatedAt: now,
-    })
-  }
-
-  byDate.set(todayString, {
-    id: byDate.get(todayString)?.id ?? uuidv4(),
-    date: todayString,
-    steps: 8432,
-    weight: 64.2,
-    waterGlasses: 5,
-    sleepHours: 7.5,
-    energyLevel: 4,
-    createdAt: byDate.get(todayString)?.createdAt ?? now,
-    updatedAt: now,
-  })
-
-  return Array.from(byDate.values()).sort((left, right) => left.date.localeCompare(right.date))
-}
-
-const initialState: HealthStoreState = {
-  logs: createInitialLogs(),
-  profile: initialProfile,
 }
 
 function mergeDefinedLogFields(target: DailyLog, source: Omit<DailyLog, 'id' | 'createdAt' | 'updatedAt'>) {
@@ -212,8 +134,20 @@ export const useHealthStore = create<HealthStore>()(
     })),
     {
       name: 'mybase-health',
+      version: 2,
       storage: createZustandStorage(),
       partialize: (state) => ({ logs: state.logs, profile: state.profile }),
+      migrate: (persistedState: unknown) => {
+        const next = persistedState as Partial<HealthStoreState> | undefined
+
+        return {
+          logs: [],
+          profile: {
+            ...initialProfile,
+            ...(next?.profile ?? {}),
+          },
+        }
+      },
     },
   ),
 )
