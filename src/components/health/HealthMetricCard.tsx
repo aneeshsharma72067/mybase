@@ -6,6 +6,7 @@ interface HealthMetricCardProps {
   subtext: string
   icon: LucideIcon
   tone: 'primary' | 'secondary' | 'blue' | 'indigo' | 'tertiary'
+  subtextClassName?: string
 }
 
 const toneStyles: Record<HealthMetricCardProps['tone'], string> = {
@@ -16,7 +17,7 @@ const toneStyles: Record<HealthMetricCardProps['tone'], string> = {
   tertiary: 'text-tertiary bg-tertiary-container/25',
 }
 
-export function HealthMetricCard({ label, value, subtext, icon: Icon, tone }: HealthMetricCardProps) {
+export function HealthMetricCard({ label, value, subtext, icon: Icon, tone, subtextClassName }: HealthMetricCardProps) {
   return (
     <article className="rounded-[1.8rem] bg-surface-container-lowest p-5 shadow-[0_10px_24px_rgba(22,29,24,0.04)] ring-1 ring-black/5 transition-transform duration-300 hover:-translate-y-1">
       <div className="mb-3 flex items-start justify-between gap-4">
@@ -26,7 +27,7 @@ export function HealthMetricCard({ label, value, subtext, icon: Icon, tone }: He
         </span>
       </div>
       <p className="font-display text-2xl font-black tracking-tight text-on-surface">{value}</p>
-      <p className="mt-1 text-[10px] font-semibold text-on-surface-variant">{subtext}</p>
+      <p className={["mt-1 text-[10px] font-semibold", subtextClassName ?? 'text-on-surface-variant'].join(' ')}>{subtext}</p>
     </article>
   )
 }

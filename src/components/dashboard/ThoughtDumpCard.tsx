@@ -9,7 +9,7 @@ interface ThoughtDumpCardProps {
 
 export function ThoughtDumpCard({ title, body, onExpand, onQuickNote }: ThoughtDumpCardProps) {
   return (
-    <section className="relative overflow-hidden rounded-xl bg-linear-to-br from-tertiary-dim to-primary p-6 lg:p-10">
+    <section className="relative overflow-hidden rounded-xl bg-linear-to-br from-secondary via-primary to-primary p-6 lg:p-10">
       <div className="relative z-10">
         <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-surface-container-lowest/50 text-on-primary-container">
           <Brain size={20} />

@@ -1,17 +1,16 @@
-import { Minus, Plus, Droplets } from 'lucide-react'
+import { Droplets } from 'lucide-react'
+import { formatWaterLitres } from '../../store/useHealthStore'
 
 interface HydrationTrackerCardProps {
   targetGlasses: number
   currentGlasses: number
-  onIncrease: () => void
-  onDecrease: () => void
+  onGlassClick: (index: number, isActive: boolean) => void
 }
 
 export function HydrationTrackerCard({
   targetGlasses,
   currentGlasses,
-  onIncrease,
-  onDecrease,
+  onGlassClick,
 }: HydrationTrackerCardProps) {
   return (
     <section className="rounded-[2.25rem] flex-1 bg-surface-container-lowest p-8 shadow-[0_10px_24px_rgba(22,29,24,0.04)] ring-1 ring-black/5">
@@ -27,41 +26,25 @@ export function HydrationTrackerCard({
           const filled = index < currentGlasses
 
           return (
-            <div
+            <button
               key={index}
+              type="button"
+              onClick={() => onGlassClick(index, filled)}
               className={[
                 'flex aspect-square items-center justify-center rounded-2xl transition-colors',
                 filled ? 'bg-blue-500 text-white shadow-[0_8px_20px_rgba(59,130,246,0.2)]' : 'bg-surface-container-highest text-surface-container-highest',
               ].join(' ')}
             >
               <Droplets size={18} className={filled ? 'fill-current' : 'text-stone-300'} />
-            </div>
+            </button>
           )
         })}
       </div>
 
       <div className="mt-6 border-t border-stone-100 pt-5">
         <div className="flex items-center justify-between gap-3">
-          <div className="text-sm font-bold text-on-surface">{(currentGlasses * 0.25).toFixed(2)}L drank</div>
-          <div className="text-xs text-on-surface-variant">Target: {(targetGlasses * 0.25).toFixed(1)}L</div>
-        </div>
-        <div className="mt-3 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onDecrease}
-            disabled={currentGlasses === 0}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant transition hover:bg-surface-container-high disabled:cursor-not-allowed disabled:opacity-45"
-          >
-            <Minus size={14} />
-          </button>
-          <button
-            type="button"
-            onClick={onIncrease}
-            disabled={currentGlasses >= targetGlasses}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-45"
-          >
-            <Plus size={14} />
-          </button>
+          <div className="text-sm font-bold text-on-surface">{formatWaterLitres(currentGlasses)} drank</div>
+          <div className="text-xs text-on-surface-variant">Target: {formatWaterLitres(targetGlasses)}</div>
         </div>
       </div>
     </section>

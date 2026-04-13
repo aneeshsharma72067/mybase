@@ -2,10 +2,19 @@ interface ActivityHeatmapCardProps {
   title: string
   subtitle: string
   imageUrl: string
-  intensities: number[]
+  cells: { date: string; intensity: 0 | 1 | 2 | 3 | 4 }[]
+  percentage: number
 }
 
-export function ActivityHeatmapCard({ title, subtitle, imageUrl, intensities }: ActivityHeatmapCardProps) {
+const intensityClasses: Record<0 | 1 | 2 | 3 | 4, string> = {
+  0: 'bg-on-primary/15',
+  1: 'bg-[#9CECB8]',
+  2: 'bg-[#75E5A1]',
+  3: 'bg-[#40D282]',
+  4: 'bg-primary-container',
+}
+
+export function ActivityHeatmapCard({ title, subtitle, imageUrl, cells, percentage }: ActivityHeatmapCardProps) {
   return (
     <section className="relative overflow-hidden rounded-[2.8rem] bg-primary p-8 text-on-primary shadow-[0_16px_32px_rgba(0,109,63,0.12)] lg:p-10">
       <img
@@ -21,23 +30,25 @@ export function ActivityHeatmapCard({ title, subtitle, imageUrl, intensities }: 
           <p className="mt-3 max-w-sm text-sm text-primary-fixed">{subtitle}</p>
           <p className="mt-6 inline-flex items-center gap-2 rounded-full bg-on-primary/12 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em]">
             <span className="h-2 w-2 rounded-full bg-primary-container" />
-            Consistency 84%
+            Consistency: {percentage}%
           </p>
         </div>
 
-        <div className="flex-1"> 
-          <div className="grid grid-cols-10 gap-2">
-            {intensities.map((intensity, index) => (
+        <div className="flex-1">
+          <div className="grid grid-cols-7 gap-2">
+            {cells.map((cell) => (
               <div
-                key={index}
-                className="aspect-square max-w-10 rounded-lg"
-                style={{ backgroundColor: `rgba(107, 253, 171, ${Math.max(0.15, intensity)})` }}
+                key={cell.date}
+                title={cell.date}
+                aria-label={cell.date}
+                data-intensity={cell.intensity}
+                className={["aspect-square max-w-10 rounded-lg", intensityClasses[cell.intensity]].join(' ')}
               />
             ))}
           </div>
           <div className="mt-4 flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.14em] text-on-primary/70">
             <span>Less active</span>
-            <span>More active</span>
+            <span>Very active</span>
           </div>
         </div>
       </div>
