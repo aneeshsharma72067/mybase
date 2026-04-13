@@ -1,6 +1,7 @@
 import { BookOpen, Dumbbell, Grid2x2, LayoutList, Palette, Sparkles } from 'lucide-react'
 import { differenceInCalendarDays, format } from 'date-fns'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ActiveQuestCard } from '../components/goals/ActiveQuestCard'
 import { AddGoalModal } from '../components/goals/AddGoalModal'
 import { GoalDetailsDrawer } from '../components/goals/GoalDetailsDrawer'
@@ -134,6 +135,7 @@ function getGoalListItem(goal: Goal): GoalListItem {
 }
 
 export function GoalsPage() {
+  const navigate = useNavigate()
   const goals = useGoalsStore((state) => state.goals)
   const activeGoalId = useGoalsStore((state) => state.activeGoalId)
   const setActiveGoal = useGoalsStore((state) => state.setActiveGoal)
@@ -141,7 +143,7 @@ export function GoalsPage() {
   const activeGoals = useMemo(() => getActiveGoals(goals), [goals])
   const momentum = useMemo(() => getMomentumData(goals), [goals])
   const [searchValue, setSearchValue] = useState('')
-  const [statusText, setStatusText] = useState('Goals synced')
+  const [statusText] = useState('Goals synced')
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [showAddGoal, setShowAddGoal] = useState(false)
   const [drawerGoal, setDrawerGoal] = useState<Goal | null>(null)
@@ -212,9 +214,7 @@ export function GoalsPage() {
         onSearchValueChange={setSearchValue}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
-        onOpenSettings={() => setStatusText('Settings opened')}
-        onOpenArchive={() => setStatusText('Archive viewed')}
-        onOpenNotifications={() => setStatusText('Notifications checked')}
+        onOpenSettings={() => navigate('/settings')}
         statusText={statusText}
       />
 

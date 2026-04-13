@@ -1,4 +1,4 @@
-import { Bell, Search, UserCircle2 } from 'lucide-react'
+import { Search } from 'lucide-react'
 
 interface HealthHeaderProps {
   query: string
@@ -25,20 +25,6 @@ export function HealthHeader({ query, onQueryChange }: HealthHeaderProps) {
             type="search"
           />
         </label>
-        <button
-          type="button"
-          aria-label="Open notifications"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-surface-container-low text-on-surface hover:bg-surface-container"
-        >
-          <Bell size={15} />
-        </button>
-        <button
-          type="button"
-          aria-label="Open profile"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-surface-container-low text-on-surface hover:bg-surface-container"
-        >
-          <UserCircle2 size={16} />
-        </button>
       </div>
     </header>
   )

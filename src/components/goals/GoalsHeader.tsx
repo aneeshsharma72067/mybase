@@ -1,4 +1,4 @@
-import { Bell, Grid2x2, LayoutList, Search, Settings2, UserCircle2 } from 'lucide-react'
+import { Grid2x2, LayoutList, Search, Settings2 } from 'lucide-react'
 
 interface GoalsHeaderProps {
   searchValue: string
@@ -6,8 +6,6 @@ interface GoalsHeaderProps {
   viewMode: 'grid' | 'list'
   onViewModeChange: (mode: 'grid' | 'list') => void
   onOpenSettings: () => void
-  onOpenArchive: () => void
-  onOpenNotifications: () => void
   statusText: string
 }
 
@@ -17,8 +15,6 @@ export function GoalsHeader({
   viewMode,
   onViewModeChange,
   onOpenSettings,
-  onOpenArchive,
-  onOpenNotifications,
   statusText,
 }: GoalsHeaderProps) {
   return (
@@ -49,13 +45,6 @@ export function GoalsHeader({
         >
           <Settings2 size={14} />
           <span>Settings</span>
-        </button>
-        <button
-          type="button"
-          onClick={onOpenArchive}
-          className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-3 py-2 text-xs font-semibold hover:bg-surface-container"
-        >
-          Archive
         </button>
 
         <div className="relative hidden items-center rounded-full border border-outline-variant/20 bg-surface-container-lowest p-1 md:flex">
@@ -89,22 +78,6 @@ export function GoalsHeader({
             <LayoutList size={15} />
           </button>
         </div>
-
-        <button
-          type="button"
-          onClick={onOpenNotifications}
-          aria-label="Open notifications"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-surface-container-low hover:bg-surface-container"
-        >
-          <Bell size={15} />
-        </button>
-        <button
-          type="button"
-          aria-label="Open profile"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-surface-container-low hover:bg-surface-container"
-        >
-          <UserCircle2 size={16} />
-        </button>
       </div>
     </header>
   )

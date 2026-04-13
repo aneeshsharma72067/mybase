@@ -1,19 +1,15 @@
-import { Bell, FolderArchive, Settings2 } from 'lucide-react'
+import { Settings2 } from 'lucide-react'
 
 interface DashboardHeaderProps {
   displayName: string
   statusMessage: string
   onOpenSettings: () => void
-  onOpenArchive: () => void
-  onOpenNotifications: () => void
 }
 
 export function DashboardHeader({
   displayName,
   statusMessage,
   onOpenSettings,
-  onOpenArchive,
-  onOpenNotifications,
 }: DashboardHeaderProps) {
   return (
     <header className="mb-8 flex flex-wrap items-center justify-between gap-4 lg:mb-10">
@@ -37,22 +33,6 @@ export function DashboardHeader({
         >
           <Settings2 size={14} />
           <span>Settings</span>
-        </button>
-        <button
-          type="button"
-          onClick={onOpenArchive}
-          className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-3 py-2 text-xs font-semibold text-on-surface hover:bg-surface-container"
-        >
-          <FolderArchive size={14} />
-          <span>Archive</span>
-        </button>
-        <button
-          type="button"
-          onClick={onOpenNotifications}
-          aria-label="Open notifications"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-surface-container-low text-on-surface hover:bg-surface-container"
-        >
-          <Bell size={16} />
         </button>
       </div>
     </header>

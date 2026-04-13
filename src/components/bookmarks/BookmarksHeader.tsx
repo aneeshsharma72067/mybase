@@ -7,7 +7,6 @@ interface BookmarksHeaderProps {
   onViewModeChange: (mode: 'grid' | 'list') => void
   onCreateBookmark: () => void
   onOpenSettings: () => void
-  onOpenArchive: () => void
 }
 
 export function BookmarksHeader({
@@ -17,7 +16,6 @@ export function BookmarksHeader({
   onViewModeChange,
   onCreateBookmark,
   onOpenSettings,
-  onOpenArchive,
 }: BookmarksHeaderProps) {
   return (
     <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
@@ -45,15 +43,6 @@ export function BookmarksHeader({
           <Settings2 size={14} />
           <span>Settings</span>
         </button>
-
-        <button
-          type="button"
-          onClick={onOpenArchive}
-          className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-3 py-2 text-xs font-semibold hover:bg-surface-container"
-        >
-          Archive
-        </button>
-
         <div className="relative hidden items-center rounded-full border border-outline-variant/20 bg-surface-container-lowest p-1 md:flex">
           <span
             aria-hidden="true"

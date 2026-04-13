@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { BookmarkCard } from '../components/bookmarks/BookmarkCard'
 import { AddBookmarkModal } from '../components/bookmarks/AddBookmarkModal'
 import { BookmarkFiltersBar } from '../components/bookmarks/BookmarkFiltersBar'
@@ -17,6 +18,7 @@ import { ChevronDown } from 'lucide-react'
 type ViewMode = 'grid' | 'list'
 
 export function BookmarksPage() {
+  const navigate = useNavigate()
   const bookmarks = useBookmarksStore((state) => state.bookmarks)
   const activeCategoryFilter = useBookmarksStore((state) => state.activeCategoryFilter)
   const searchQuery = useBookmarksStore((state) => state.searchQuery)
@@ -99,8 +101,7 @@ export function BookmarksPage() {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onCreateBookmark={openCreateComposer}
-        onOpenSettings={() => setStatusText('Settings opened')}
-        onOpenArchive={() => setStatusText('Archive viewed')}
+        onOpenSettings={() => navigate('/settings')}
       />
 
       <BookmarksHero

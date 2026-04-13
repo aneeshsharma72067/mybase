@@ -1,12 +1,10 @@
-import { Bell, Plus, Search, Settings2, UserCircle2 } from 'lucide-react'
+import { Plus, Search, Settings2 } from 'lucide-react'
 
 interface ThoughtsHeaderProps {
   searchValue: string
   onSearchValueChange: (value: string) => void
   onCreateThought: () => void
-  onOpenArchive: () => void
   onOpenSettings: () => void
-  onOpenNotifications: () => void
   statusText: string
 }
 
@@ -14,9 +12,7 @@ export function ThoughtsHeader({
   searchValue,
   onSearchValueChange,
   onCreateThought,
-  onOpenArchive,
   onOpenSettings,
-  onOpenNotifications,
   statusText,
 }: ThoughtsHeaderProps) {
   return (
@@ -39,14 +35,6 @@ export function ThoughtsHeader({
             className="w-44 bg-transparent text-sm outline-none lg:w-64"
           />
         </label>
-
-        <button
-          type="button"
-          onClick={onOpenArchive}
-          className="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-3 py-2 text-xs font-semibold hover:bg-surface-container"
-        >
-          Archive
-        </button>
         <button
           type="button"
           onClick={onCreateThought}
@@ -62,21 +50,6 @@ export function ThoughtsHeader({
         >
           <Settings2 size={14} />
           <span>Settings</span>
-        </button>
-        <button
-          type="button"
-          onClick={onOpenNotifications}
-          aria-label="Open notifications"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-surface-container-low hover:bg-surface-container"
-        >
-          <Bell size={15} />
-        </button>
-        <button
-          type="button"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-surface-container-low hover:bg-surface-container"
-          aria-label="Open profile"
-        >
-          <UserCircle2 size={16} />
         </button>
       </div>
     </header>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { TodoFiltersBar, type TodoFilter } from '../components/todos/TodoFiltersBar'
 import { TodoHeader } from '../components/todos/TodoHeader'
 import { TodoInsightCard } from '../components/todos/TodoInsightCard'
@@ -17,6 +18,7 @@ import {
 import { useThoughtsStore } from '../store/useThoughtsStore'
 
 export function TodoPage() {
+  const navigate = useNavigate()
   const todos = useTodoStore((state) => state.todos)
   const lists = useTodoStore((state) => state.lists)
   const addTodo = useTodoStore((state) => state.addTodo)
@@ -32,7 +34,6 @@ export function TodoPage() {
   const [toastText, setToastText] = useState<string | null>(null)
   const [activeFilter, setActiveFilter] = useState<TodoFilter>('all')
   const [activeListId, setActiveListId] = useState('all')
-  const [archiveOnly, setArchiveOnly] = useState(false)
   const thoughts = useThoughtsStore((state) => state.thoughts)
 
   function pushStatus(message: string) {
@@ -65,8 +66,8 @@ export function TodoPage() {
   )
 
   const visibleTodos = useMemo(() => {
-    return getFilteredTodos(todos, activeFilter, activeListId, searchValue, archiveOnly)
-  }, [activeFilter, activeListId, archiveOnly, searchValue, todos])
+    return getFilteredTodos(todos, activeFilter, activeListId, searchValue, false)
+  }, [activeFilter, activeListId, searchValue, todos])
 
   const listNameById = useMemo(() => {
     return new Map(lists.map((list) => [list.id, list.name] as const))
@@ -114,16 +115,9 @@ export function TodoPage() {
       <TodoHeader
         searchValue={searchValue}
         onSearchValueChange={setSearchValue}
-        onOpenSettings={() => pushStatus('Settings opened')}
-        onOpenArchive={() => {
-          const next = !archiveOnly
-          setArchiveOnly(next)
-          pushStatus(next ? 'Archive mode enabled' : 'Archive mode disabled')
-        }}
-        onOpenNotifications={() => pushStatus('Notifications checked')}
+        onOpenSettings={() => navigate('/settings')}
         onOpenCreate={() => pushStatus('Quick create ready below')}
         statusText={statusText}
-        archiveActive={archiveOnly}
       />
 
       <section className="grid grid-cols-12 gap-6 lg:gap-8">

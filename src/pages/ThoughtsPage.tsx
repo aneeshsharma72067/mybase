@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { format } from 'date-fns'
+import { useNavigate } from 'react-router-dom'
 import { ClarityChartCard } from '../components/thoughts/ClarityChartCard'
 import { ConsistencyCard } from '../components/thoughts/ConsistencyCard'
 import { ThoughtCalendarCard } from '../components/thoughts/ThoughtCalendarCard'
@@ -34,6 +35,7 @@ function getThoughtBody(thought: Thought): string {
 }
 
 export function ThoughtsPage() {
+  const navigate = useNavigate()
   const {
     thoughts,
     activeThoughtId,
@@ -125,9 +127,7 @@ export function ThoughtsPage() {
           setActiveThought(NEW_THOUGHT_ID)
           setStatusText('Composing a new thought')
         }}
-        onOpenArchive={() => setStatusText('Archive opened')}
-        onOpenSettings={() => setStatusText('Settings requested')}
-        onOpenNotifications={() => setStatusText('Notifications checked')}
+        onOpenSettings={() => navigate('/settings')}
         statusText={statusText}
       />
 

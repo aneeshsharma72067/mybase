@@ -84,9 +84,7 @@ export function DashboardPage() {
       <DashboardHeader
         displayName={displayName}
         statusMessage={actionMessage}
-        onOpenSettings={() => updateMessage('Settings panel requested')}
-        onOpenArchive={() => updateMessage('Archive opened')}
-        onOpenNotifications={() => updateMessage('Notifications checked')}
+        onOpenSettings={() => navigate('/settings')}
       />
 
       <div className="grid grid-cols-12 gap-6 lg:gap-8">
