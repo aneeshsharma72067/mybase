@@ -1,73 +1,68 @@
-# React + TypeScript + Vite
+# MyBase
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+MyBase is a comprehensive, centralized personal dashboard application designed to help you organize your life, track your progress, and maintain focus across multiple domains. Built with modern web technologies, it provides a unified interface to manage your daily activities, finances, goals, and more.
 
-Currently, two official plugins are available:
+## Key Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Dashboard:** A central hub providing an overview of your current state, including quick stats, progress, and pending items.
+- **Health Tracking:** Monitor your physical and mental well-being with activity heatmaps, habit tracking, and sleep cycles.
+- **Thoughts & Reflection:** A dedicated space for capturing thoughts, insights, and maintaining consistency in your reflection practice.
+- **Goals & Quests:** Track long-term ambitions and daily milestones with a goal-oriented progress interface.
+- **Todo Manager:** Efficiently manage your daily tasks, to-dos, and productivity momentum.
+- **Bookmark Management:** Organize your digital resources and bookmarks in one place.
+- **Password Vault:** Securely store and manage your credentials with built-in generation capabilities.
+- **Income & Finance:** Manage your financial health, track transactions, and visualize income sustainability.
+- **Settings & Personalization:** Tailor the application to your preferences.
 
-## React Compiler
+## Technology Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Framework:** React 19
+- **Build Tool:** Vite
+- **Language:** TypeScript
+- **State Management:** Zustand
+- **Routing:** React Router v7
+- **Styling:** TailwindCSS
+- **Visualization:** Recharts
+- **Icons:** Lucide React
+- **Utilities:** date-fns, immer, uuid
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Prerequisites
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- [Node.js](https://nodejs.org/) (latest LTS recommended)
+- npm or pnpm
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Installation
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/aneeshsharma72067/mybase.git
+   cd mybase
+   ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Development
+
+- **Linting:** `npm run lint`
+- **Building:** `npm run build`
+- **Previewing:** `npm run preview`
+
+## Project Structure
+
+The project is organized into modular components and stores for each functional domain:
+
+- `src/components`: Reusable UI components organized by module.
+- `src/pages`: Top-level routing components for each feature.
+- `src/store`: Zustand stores for global application state.
+- `src/types`: TypeScript definitions for domain models.
+- `src/lib`: Shared utility functions.
