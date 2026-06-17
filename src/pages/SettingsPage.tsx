@@ -1,12 +1,13 @@
 import { KeyRound, Palette, Shield, User } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChangeMasterPasswordModal } from '../components/settings/ChangeMasterPasswordModal'
 import { SettingsHeader } from '../components/settings/SettingsHeader'
 import { SettingsSection } from '../components/settings/SettingsSection'
 import { applyAccent, applyBorderStyle, applyTheme } from '../lib/settingsAppearance'
+import { fileToDataUrl, MAX_AVATAR_BYTES } from '../lib/utils'
 import { usePasswordStore } from '../store/usePasswordStore'
 import { useSettingsStore } from '../store/useSettingsStore'
-import type { SettingsAccent, UserSettings } from '../types/settings.types'
+import type { SettingsAccent, SettingsBorderStyle, UserSettings } from '../types/settings.types'
 
 const accentMap: Record<SettingsAccent, { label: string; color: string }> = {
   primary: { label: 'Forest Green', color: '#3f6754' },
@@ -23,6 +24,11 @@ const autoLockOptions: Array<{ label: string; value: UserSettings['autoLockMinut
   { label: 'Never', value: 0 },
 ]
 
+const borderStyleOptions: Array<{ value: SettingsBorderStyle; label: string; hint: string }> = [
+  { value: 'smooth', label: 'Smooth', hint: 'Rounded corners' },
+  { value: 'sharp', label: 'Sharp', hint: 'Crisp edges' },
+]
+
 export function SettingsPage() {
   const savedSettings = useSettingsStore((state) => state.settings)
   const setSettings = useSettingsStore((state) => state.setSettings)
@@ -33,6 +39,30 @@ export function SettingsPage() {
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
   const [changePasswordError, setChangePasswordError] = useState('')
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+
+  async function handleAvatarChange(file: File | undefined) {
+    if (!file) {
+      return
+    }
+
+    if (!file.type.startsWith('image/')) {
+      setStatusText('Please choose an image file')
+      return
+    }
+
+    if (file.size > MAX_AVATAR_BYTES) {
+      setStatusText('Image must be under 2 MB')
+      return
+    }
+
+    try {
+      updateDraft({ avatarUrl: await fileToDataUrl(file) })
+      setStatusText('Avatar updated — save to apply')
+    } catch {
+      setStatusText('Failed to read image')
+    }
+  }
 
   useEffect(() => {
     setDraft(savedSettings)
@@ -128,18 +158,42 @@ export function SettingsPage() {
         <SettingsSection title="Profile" icon={User} tone="primary">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
             <div className="flex flex-col items-center justify-center gap-4 md:col-span-4 md:border-r md:border-outline-variant/20 md:pr-8">
-              <img
-                src={draft.avatarUrl}
-                alt="Profile avatar"
-                className="h-28 w-28 rounded-full border-4 border-surface-container-lowest object-cover shadow-lg"
+              {draft.avatarUrl ? (
+                <img
+                  src={draft.avatarUrl}
+                  alt="Profile avatar"
+                  className="h-28 w-28 rounded-full border-4 border-surface-container-lowest object-cover shadow-lg"
+                />
+              ) : (
+                <span className="flex h-28 w-28 items-center justify-center rounded-full border-4 border-surface-container-lowest bg-primary-container text-4xl font-black text-primary shadow-lg">
+                  {draft.displayName.trim().charAt(0).toUpperCase() || '?'}
+                </span>
+              )}
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(event) => void handleAvatarChange(event.target.files?.[0])}
               />
-              <button
-                type="button"
-                className="rounded-full bg-surface-container px-4 py-2 text-xs font-bold text-on-surface hover:bg-surface-container-high"
-                onClick={() => setStatusText('Avatar uploads will be added in the next iteration')}
-              >
-                Change Avatar
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="rounded-full bg-surface-container px-4 py-2 text-xs font-bold text-on-surface hover:bg-surface-container-high"
+                  onClick={() => avatarInputRef.current?.click()}
+                >
+                  Change Avatar
+                </button>
+                {draft.avatarUrl ? (
+                  <button
+                    type="button"
+                    className="rounded-full px-3 py-2 text-xs font-bold text-on-surface-variant hover:text-error"
+                    onClick={() => updateDraft({ avatarUrl: '' })}
+                  >
+                    Remove
+                  </button>
+                ) : null}
+              </div>
             </div>
             <div className="space-y-5 md:col-span-8">
               <label className="block space-y-2">
@@ -212,11 +266,30 @@ export function SettingsPage() {
               </div>
             </div>
 
-           
+            <div className="space-y-4">
+              <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-on-surface-variant">Corner Style</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {borderStyleOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => updateDraft({ borderStyle: option.value })}
+                    className={[
+                      'flex flex-col items-start gap-1 border-2 px-4 py-4 text-left transition-colors',
+                      option.value === 'smooth' ? 'rounded-2xl' : 'rounded-none',
+                      draft.borderStyle === option.value
+                        ? 'border-primary bg-surface-container-lowest text-primary'
+                        : 'border-transparent bg-surface-container-high text-on-surface-variant hover:border-outline-variant',
+                    ].join(' ')}
+                  >
+                    <span className="text-sm font-bold">{option.label}</span>
+                    <span className="text-xs font-medium text-on-surface-variant">{option.hint}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </SettingsSection>
-
-       
 
         <SettingsSection title="Security" icon={Shield} tone="error">
           <div className="space-y-8">

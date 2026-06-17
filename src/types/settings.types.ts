@@ -21,6 +21,7 @@ export interface UserSettings {
   notificationsEnabled: boolean
   defaultLandingPage: SettingsLandingPage
   autoLockMinutes: 5 | 15 | 60 | 0
+  onboarded: boolean
 }
 
 export interface SettingsStoreState {
