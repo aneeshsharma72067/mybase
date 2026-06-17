@@ -1,9 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { applyAccent, applyBorderStyle, applyTheme } from '../../lib/settingsAppearance'
 import { useAutoLock } from '../../lib/useAutoLock'
 import { useAppStore } from '../../store/useAppStore'
 import { useSettingsStore } from '../../store/useSettingsStore'
+import { DailyCheckInModal } from '../health/DailyCheckInModal'
 import { OnboardingModal } from '../onboarding/OnboardingModal'
 import { MainArea } from './MainArea'
 import { Sidebar } from './Sidebar'
@@ -26,6 +27,7 @@ export function Shell() {
   const setActiveModule = useAppStore((state) => state.setActiveModule)
   const settings = useSettingsStore((state) => state.settings)
   const patchSettings = useSettingsStore((state) => state.patchSettings)
+  const [showCheckIn, setShowCheckIn] = useState(false)
 
   useAutoLock()
 
@@ -41,8 +43,9 @@ export function Shell() {
 
   return (
     <div className="min-h-screen bg-background text-on-background lg:grid lg:grid-cols-[18rem_1fr]">
-      <Sidebar />
+      <Sidebar onOpenCheckIn={() => setShowCheckIn(true)} />
       <MainArea />
+      <DailyCheckInModal isOpen={showCheckIn} onClose={() => setShowCheckIn(false)} />
       {!settings.onboarded ? (
         <OnboardingModal
           onComplete={(profile) => patchSettings({ ...profile, onboarded: true })}

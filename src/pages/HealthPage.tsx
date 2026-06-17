@@ -1,8 +1,7 @@
 import { Droplets, Footprints, HeartPulse, MoonStar, Scale, Zap } from 'lucide-react'
 import { format } from 'date-fns'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ActivityHeatmapCard } from '../components/health/ActivityHeatmapCard'
-import { DailyCheckInModal } from '../components/health/DailyCheckInModal'
 import { HealthHeader } from '../components/health/HealthHeader'
 import { HealthMetricCard } from '../components/health/HealthMetricCard'
 import { HydrationTrackerCard } from '../components/health/HydrationTrackerCard'
@@ -25,7 +24,6 @@ const forestImage = '/images/health/health-forest.jpg'
 export function HealthPage() {
   const [query, setQuery] = useState('')
   const [monthRange, setMonthRange] = useState<1 | 3 | 999>(3)
-  const [showCheckIn, setShowCheckIn] = useState(false)
 
   const logs = useHealthStore((state) => state.logs)
   const profile = useHealthStore((state) => state.profile)
@@ -70,15 +68,6 @@ export function HealthPage() {
   }, [monthlyConsistency.cells, monthDays])
 
   const energyEmoji = getEnergyEmoji(todayLog?.energyLevel)
-
-  useEffect(() => {
-    function handleOpenCheckIn() {
-      setShowCheckIn(true)
-    }
-
-    window.addEventListener('mybase:health-open-check-in', handleOpenCheckIn)
-    return () => window.removeEventListener('mybase:health-open-check-in', handleOpenCheckIn)
-  }, [])
 
   const metrics = [
     {
@@ -347,8 +336,6 @@ export function HealthPage() {
             percentage={monthlyConsistency.percentage}
           />
         </div>
-
-      <DailyCheckInModal isOpen={showCheckIn} onClose={() => setShowCheckIn(false)} />
     </div>
   )
 }
