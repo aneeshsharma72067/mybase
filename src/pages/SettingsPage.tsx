@@ -1,8 +1,10 @@
-import { KeyRound, Palette, Shield, User } from 'lucide-react'
+import { Database, Download, KeyRound, Palette, Shield, Upload, User } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChangeMasterPasswordModal } from '../components/settings/ChangeMasterPasswordModal'
+import { ImportConfirmModal } from '../components/settings/ImportConfirmModal'
 import { SettingsHeader } from '../components/settings/SettingsHeader'
 import { SettingsSection } from '../components/settings/SettingsSection'
+import { downloadBackup, importBackupFromFile, validateBackup, type BackupSummary } from '../lib/backup'
 import { applyAccent, applyBorderStyle, applyTheme } from '../lib/settingsAppearance'
 import { fileToDataUrl, MAX_AVATAR_BYTES } from '../lib/utils'
 import { usePasswordStore } from '../store/usePasswordStore'
@@ -40,6 +42,44 @@ export function SettingsPage() {
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
   const [changePasswordError, setChangePasswordError] = useState('')
   const avatarInputRef = useRef<HTMLInputElement>(null)
+  const backupInputRef = useRef<HTMLInputElement>(null)
+  const [pendingImport, setPendingImport] = useState<{ file: File; summary: BackupSummary } | null>(null)
+
+  function handleExport() {
+    try {
+      downloadBackup()
+      setStatusText('Backup downloaded')
+    } catch {
+      setStatusText('Could not create backup')
+    }
+  }
+
+  async function handleBackupFileSelected(file: File | undefined) {
+    if (!file) {
+      return
+    }
+
+    try {
+      const summary = validateBackup(JSON.parse(await file.text()))
+      setPendingImport({ file, summary })
+    } catch (error) {
+      setStatusText(error instanceof Error ? error.message : 'Invalid backup file')
+    }
+  }
+
+  async function handleConfirmImport() {
+    if (!pendingImport) {
+      return
+    }
+
+    try {
+      await importBackupFromFile(pendingImport.file)
+      window.location.reload()
+    } catch (error) {
+      setStatusText(error instanceof Error ? error.message : 'Restore failed')
+      setPendingImport(null)
+    }
+  }
 
   async function handleAvatarChange(file: File | undefined) {
     if (!file) {
@@ -328,6 +368,54 @@ export function SettingsPage() {
           </div>
         </SettingsSection>
 
+        <SettingsSection title="Data & Backup" icon={Database} tone="tertiary">
+          <div className="space-y-8">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex-1">
+                <p className="font-bold text-on-surface">Export backup</p>
+                <p className="text-sm text-on-surface-variant">
+                  Download all your data as a single JSON file. Your vault stays encrypted.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleExport}
+                className="inline-flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-6 py-3 font-bold text-on-surface hover:bg-surface-container"
+              >
+                <Download size={16} />
+                Export
+              </button>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-4 border-t border-outline-variant/20 pt-6">
+              <div className="flex-1">
+                <p className="font-bold text-on-surface">Restore backup</p>
+                <p className="text-sm text-on-surface-variant">
+                  Import a backup file. This replaces all current data.
+                </p>
+              </div>
+              <input
+                ref={backupInputRef}
+                type="file"
+                accept="application/json,.json"
+                className="hidden"
+                onChange={(event) => {
+                  void handleBackupFileSelected(event.target.files?.[0])
+                  event.target.value = ''
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => backupInputRef.current?.click()}
+                className="inline-flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-6 py-3 font-bold text-on-surface hover:bg-surface-container"
+              >
+                <Upload size={16} />
+                Restore
+              </button>
+            </div>
+          </div>
+        </SettingsSection>
+
         <div className="flex items-center justify-end gap-4 pt-2">
           <button
             type="button"
@@ -354,6 +442,15 @@ export function SettingsPage() {
         errorText={changePasswordError}
         onClose={closeChangePasswordModal}
         onSubmit={handleChangeMasterPassword}
+      />
+
+      <ImportConfirmModal
+        isOpen={pendingImport !== null}
+        fileName={pendingImport?.file.name ?? ''}
+        exportedAt={pendingImport?.summary.exportedAt ?? ''}
+        storeCount={pendingImport?.summary.keys.length ?? 0}
+        onConfirm={() => void handleConfirmImport()}
+        onClose={() => setPendingImport(null)}
       />
     </div>
   )
