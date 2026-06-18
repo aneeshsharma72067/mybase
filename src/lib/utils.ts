@@ -18,3 +18,14 @@ export function formatDate(date: string | Date, fmt = 'yyyy-MM-dd'): string {
 export function getTodayISO(): string {
   return format(new Date(), 'yyyy-MM-dd')
 }
+
+export const MAX_AVATAR_BYTES = 2 * 1024 * 1024
+
+export function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = () => reject(new Error('Failed to read file'))
+    reader.readAsDataURL(file)
+  })
+}

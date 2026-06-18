@@ -12,16 +12,16 @@ type SettingsStoreActions = {
 export type SettingsStore = SettingsStoreState & SettingsStoreActions
 
 const initialSettings: UserSettings = {
-  displayName: 'Julian Forest',
-  email: 'julian@mybase.com',
-  avatarUrl:
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuADLry5E3tZBNKEDM6EvOBz1VSy4wkcUel1QoGoKwdsMa2_WASge_BxdRVkOWy_mL-iAuFNdEdB4fnGDsIRWJHB4iYmG-zXhvi6OSzHG5SHvcludX8SNcgaSQqoMbZcaKBvgJhrUCHSwvowEhwv3AKQu0rd9ThPghThAe9cLruKh_7n3kIHmdeWexICgnyhREzIU0_6QO8DcCmQ2bb2_LHRA5ejq-yAtemxijKCnQvG8Q2qRXJjFkTRWuPHnAqIvACjYtIZQjonSDQ',
+  displayName: '',
+  email: '',
+  avatarUrl: '',
   themeMode: 'light',
   accent: 'primary',
   borderStyle: 'smooth',
   notificationsEnabled: true,
   defaultLandingPage: 'dashboard',
   autoLockMinutes: 15,
+  onboarded: false,
 }
 
 const initialState: SettingsStoreState = {

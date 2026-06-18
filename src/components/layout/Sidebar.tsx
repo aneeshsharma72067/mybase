@@ -24,11 +24,11 @@ const topLinks = [
   { to: '/settings', label: 'Settings', icon: Settings },
 ] as const
 
-export function Sidebar() {
-  function openDailyCheckIn() {
-    window.dispatchEvent(new CustomEvent('mybase:health-open-check-in'))
-  }
+interface SidebarProps {
+  onOpenCheckIn: () => void
+}
 
+export function Sidebar({ onOpenCheckIn }: SidebarProps) {
   return (
     <aside className="z-10 border-b border-outline-variant/50 bg-surface-container-low px-4 py-5 lg:sticky lg:top-0 lg:h-screen lg:rounded-r-[2.5rem] lg:border-b-0 lg:px-5 lg:py-8">
       <div className="mb-6 px-2">
@@ -50,7 +50,7 @@ export function Sidebar() {
       <div className="mt-6 px-1">
         <button
           type="button"
-          onClick={openDailyCheckIn}
+          onClick={onOpenCheckIn}
           className="w-full rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-on-primary transition hover:opacity-95"
         >
           Daily Check-in
