@@ -32,6 +32,21 @@ export function loadFromStorage<T>(key: string): T | null {
   }
 }
 
+/**
+ * Parse a zustand persist payload from raw localStorage text. createZustandStorage
+ * wraps createJSONStorage, so values are JSON-stringified twice; one parse is not
+ * enough for direct localStorage reads (e.g. initDataEncryptionFlag on boot).
+ */
+export function parsePersistedStorageRaw(raw: string): unknown {
+  let parsed: unknown = JSON.parse(raw)
+
+  if (typeof parsed === 'string') {
+    parsed = JSON.parse(parsed)
+  }
+
+  return parsed
+}
+
 export function createPersistStorage(): StateStorage {
   return {
     getItem: (name) => loadFromStorage<string>(name),

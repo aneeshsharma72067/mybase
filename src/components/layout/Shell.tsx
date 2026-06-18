@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
+import { setDataEncryptionEnabled } from '../../lib/encryptedStorage'
 import { applyAccent, applyBorderStyle, applyTheme } from '../../lib/settingsAppearance'
 import { useAutoLock } from '../../lib/useAutoLock'
 import { useAppStore } from '../../store/useAppStore'
@@ -45,6 +46,10 @@ export function Shell() {
     applyAccent(settings.accent)
     applyBorderStyle(settings.borderStyle)
   }, [settings.accent, settings.borderStyle, settings.themeMode])
+
+  useEffect(() => {
+    setDataEncryptionEnabled(settings.encryptData)
+  }, [settings.encryptData])
 
   if (isAppLocked) {
     return <AppLockScreen />

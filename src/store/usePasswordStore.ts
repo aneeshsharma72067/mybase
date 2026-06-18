@@ -15,7 +15,7 @@ import {
   verifyToken,
 } from '../lib/crypto'
 import { clearVaultKey, getVaultKey, setVaultKey } from '../lib/vaultKey'
-import { isDataEncryptionEnabled } from '../lib/encryptedStorage'
+import { isAppWideEncryptionActive } from '../lib/encryptedStorage'
 import { reencryptAllStores } from '../lib/dataEncryption'
 import type { PasswordEntry, VaultMeta, VaultState } from '../types/password.types'
 
@@ -223,7 +223,7 @@ export const usePasswordStore = create<PasswordStore>()(
 
         // If app-wide encryption is on, re-key the encrypted stores too,
         // otherwise they would become unreadable under the new password.
-        if (isDataEncryptionEnabled()) {
+        if (isAppWideEncryptionActive()) {
           await reencryptAllStores(currentKey, nextKey)
         }
 

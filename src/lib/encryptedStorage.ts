@@ -1,6 +1,7 @@
 import type { StateStorage } from 'zustand/middleware'
 import { createJSONStorage } from 'zustand/middleware'
 import { decryptText, encryptText } from './crypto'
+import { parsePersistedStorageRaw } from './storage'
 import { getVaultKey } from './vaultKey'
 
 /**
@@ -34,23 +35,32 @@ export function isDataEncryptionEnabled(): boolean {
 }
 
 /** Read the persisted `encryptData` setting directly (settings stays plaintext). */
-export function initDataEncryptionFlag(settingsKey: string): void {
+export function readEncryptDataSetting(settingsKey = 'mybase-settings'): boolean {
   if (typeof window === 'undefined') {
-    return
+    return false
   }
 
   const raw = window.localStorage.getItem(settingsKey)
 
   if (!raw) {
-    return
+    return false
   }
 
   try {
-    const parsed = JSON.parse(raw) as { state?: { settings?: { encryptData?: boolean } } }
-    dataEncryptionEnabled = parsed.state?.settings?.encryptData === true
+    const parsed = parsePersistedStorageRaw(raw) as { state?: { settings?: { encryptData?: boolean } } }
+    return parsed.state?.settings?.encryptData === true
   } catch {
-    dataEncryptionEnabled = false
+    return false
   }
+}
+
+export function initDataEncryptionFlag(settingsKey: string): void {
+  dataEncryptionEnabled = readEncryptDataSetting(settingsKey)
+}
+
+/** Module flag or persisted setting — covers stale flag after reload. */
+export function isAppWideEncryptionActive(): boolean {
+  return dataEncryptionEnabled || readEncryptDataSetting()
 }
 
 function isEnvelope(value: unknown): value is EncryptedEnvelope {
