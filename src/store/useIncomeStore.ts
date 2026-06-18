@@ -3,7 +3,8 @@ import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 import { persist } from 'zustand/middleware'
 import { v4 as uuidv4 } from 'uuid'
-import { createZustandStorage } from '../lib/storage'
+import { createEncryptedStorage } from '../lib/encryptedStorage'
+import { registerEncryptedRehydrate } from '../lib/dataEncryption'
 import type { Transaction } from '../types/income.types'
 
 type IncomeStoreActions = {
@@ -106,7 +107,7 @@ export const useIncomeStore = create<IncomeStore>()(
     })),
     {
       name: 'mybase-income',
-      storage: createZustandStorage(),
+      storage: createEncryptedStorage(),
       partialize: (state) => ({
         transactions: state.transactions,
         searchQuery: state.searchQuery,
@@ -266,3 +267,4 @@ export function formatCurrency(amount: number): string {
     maximumFractionDigits: 2,
   })}`
 }
+registerEncryptedRehydrate(() => useIncomeStore.persist.rehydrate())

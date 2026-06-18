@@ -22,6 +22,7 @@ const initialSettings: UserSettings = {
   defaultLandingPage: 'dashboard',
   autoLockMinutes: 15,
   onboarded: false,
+  encryptData: false,
 }
 
 const initialState: SettingsStoreState = {

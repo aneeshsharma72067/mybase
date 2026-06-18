@@ -3,7 +3,8 @@ import { immer } from 'zustand/middleware/immer'
 import { persist } from 'zustand/middleware'
 import { format } from 'date-fns'
 import { v4 as uuidv4 } from 'uuid'
-import { createZustandStorage } from '../lib/storage'
+import { createEncryptedStorage } from '../lib/encryptedStorage'
+import { registerEncryptedRehydrate } from '../lib/dataEncryption'
 import type { Thought, ThoughtStoreState } from '../types/thought.types'
 
 type ThoughtsStoreActions = {
@@ -103,7 +104,7 @@ export const useThoughtsStore = create<ThoughtsStore>()(
     })),
     {
       name: 'mybase-thoughts',
-      storage: createZustandStorage(),
+      storage: createEncryptedStorage(),
       partialize: (state) => ({
         thoughts: state.thoughts,
         activeThoughtId: state.activeThoughtId,
@@ -146,3 +147,4 @@ export function getFilteredThoughts(thoughts: Thought[], tagFilter: string | nul
     return right.createdAt.localeCompare(left.createdAt)
   })
 }
+registerEncryptedRehydrate(() => useThoughtsStore.persist.rehydrate())

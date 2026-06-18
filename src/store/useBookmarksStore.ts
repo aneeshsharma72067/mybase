@@ -2,7 +2,8 @@ import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 import { persist } from 'zustand/middleware'
 import { v4 as uuidv4 } from 'uuid'
-import { createZustandStorage } from '../lib/storage'
+import { createEncryptedStorage } from '../lib/encryptedStorage'
+import { registerEncryptedRehydrate } from '../lib/dataEncryption'
 import type { Bookmark } from '../types/bookmark.types'
 
 type BookmarksStoreActions = {
@@ -136,7 +137,7 @@ export const useBookmarksStore = create<BookmarksStore>()(
     {
       name: 'mybase-bookmarks',
       version: 1,
-      storage: createZustandStorage(),
+      storage: createEncryptedStorage(),
       migrate: (persistedState) => {
         const state = (persistedState ?? {}) as Partial<BookmarkStoreState> & {
           bookmarks?: LegacyBookmark[]
@@ -255,3 +256,4 @@ export function getGradientForCategory(category: string): string {
 
   return 'linear-gradient(135deg, #2d4a3d, #3d7a5c)'
 }
+registerEncryptedRehydrate(() => useBookmarksStore.persist.rehydrate())

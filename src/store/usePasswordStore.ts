@@ -14,9 +14,10 @@ import {
   saltFromBase64,
   verifyToken,
 } from '../lib/crypto'
+import { clearVaultKey, getVaultKey, setVaultKey } from '../lib/vaultKey'
+import { isDataEncryptionEnabled } from '../lib/encryptedStorage'
+import { reencryptAllStores } from '../lib/dataEncryption'
 import type { PasswordEntry, VaultMeta, VaultState } from '../types/password.types'
-
-let activeKey: CryptoKey | null = null
 
 interface PasswordStoreState {
   entries: PasswordEntry[]
@@ -129,7 +130,7 @@ export const usePasswordStore = create<PasswordStore>()(
           state.vaultState = 'unlocked'
         })
 
-        activeKey = key
+        setVaultKey(key)
       },
       unlockVault: async (masterPassword) => {
         const { meta } = get()
@@ -145,7 +146,7 @@ export const usePasswordStore = create<PasswordStore>()(
           return false
         }
 
-        activeKey = key
+        setVaultKey(key)
 
         set((state) => {
           state.vaultState = 'unlocked'
@@ -220,22 +221,30 @@ export const usePasswordStore = create<PasswordStore>()(
           state.vaultState = 'unlocked'
         })
 
-        activeKey = nextKey
+        // If app-wide encryption is on, re-key the encrypted stores too,
+        // otherwise they would become unreadable under the new password.
+        if (isDataEncryptionEnabled()) {
+          await reencryptAllStores(currentKey, nextKey)
+        }
+
+        setVaultKey(nextKey)
         return true
       },
       lockVault: () => {
-        activeKey = null
+        clearVaultKey()
 
         set((state) => {
           state.vaultState = 'locked'
         })
       },
       addEntry: async (plain) => {
-        if (!activeKey) {
+        const key = getVaultKey()
+
+        if (!key) {
           throw new Error('Vault is locked')
         }
 
-        const encrypted = await encryptEntry(plain.plainPassword, activeKey)
+        const encrypted = await encryptEntry(plain.plainPassword, key)
         const now = new Date().toISOString()
 
         set((state) => {
@@ -254,7 +263,9 @@ export const usePasswordStore = create<PasswordStore>()(
         })
       },
       updateEntry: async (id, plain) => {
-        if (!activeKey) {
+        const key = getVaultKey()
+
+        if (!key) {
           throw new Error('Vault is locked')
         }
 
@@ -262,7 +273,7 @@ export const usePasswordStore = create<PasswordStore>()(
         let strengthPatch: PasswordEntry['strength'] | null = null
 
         if (plain.plainPassword) {
-          encryptedPatch = await encryptEntry(plain.plainPassword, activeKey)
+          encryptedPatch = await encryptEntry(plain.plainPassword, key)
           strengthPatch = calculateStrength(plain.plainPassword)
         }
 
@@ -300,7 +311,9 @@ export const usePasswordStore = create<PasswordStore>()(
         })
       },
       decryptEntryById: async (id) => {
-        if (!activeKey) {
+        const key = getVaultKey()
+
+        if (!key) {
           throw new Error('Vault is locked')
         }
 
@@ -314,7 +327,7 @@ export const usePasswordStore = create<PasswordStore>()(
           return 'Set up vault to decrypt'
         }
 
-        return decryptEntry(entry.ciphertext, entry.iv, activeKey)
+        return decryptEntry(entry.ciphertext, entry.iv, key)
       },
       setSearchQuery: (query) => {
         set((state) => {
@@ -335,7 +348,7 @@ export const usePasswordStore = create<PasswordStore>()(
           return
         }
 
-        activeKey = null
+        clearVaultKey()
         state.vaultState = state.meta ? 'locked' : 'uninitialized'
       },
     },

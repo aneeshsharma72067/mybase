@@ -2,7 +2,8 @@ import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 import { persist } from 'zustand/middleware'
 import { format, isSameDay, subDays } from 'date-fns'
-import { createZustandStorage } from '../lib/storage'
+import { createEncryptedStorage } from '../lib/encryptedStorage'
+import { registerEncryptedRehydrate } from '../lib/dataEncryption'
 import { generateId, getTodayISO } from '../lib/utils'
 import type { Todo, TodoList, TodoStoreState } from '../types/todo.types'
 
@@ -96,7 +97,7 @@ export const useTodoStore = create<TodoStore>()(
     })),
     {
       name: 'mybase-todos',
-      storage: createZustandStorage(),
+      storage: createEncryptedStorage(),
       partialize: (state) => ({ todos: state.todos, lists: state.lists }),
     },
   ),
@@ -188,3 +189,4 @@ export function getTodoMomentumData(todos: Todo[]): TodoMomentumData {
     completedThisWeek,
   }
 }
+registerEncryptedRehydrate(() => useTodoStore.persist.rehydrate())

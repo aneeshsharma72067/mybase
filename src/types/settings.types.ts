@@ -22,6 +22,7 @@ export interface UserSettings {
   defaultLandingPage: SettingsLandingPage
   autoLockMinutes: 5 | 15 | 60 | 0
   onboarded: boolean
+  encryptData: boolean
 }
 
 export interface SettingsStoreState {

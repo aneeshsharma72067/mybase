@@ -3,7 +3,8 @@ import { immer } from 'zustand/middleware/immer'
 import { persist } from 'zustand/middleware'
 import { format, isSameDay, subDays } from 'date-fns'
 import { v4 as uuidv4 } from 'uuid'
-import { createZustandStorage } from '../lib/storage'
+import { createEncryptedStorage } from '../lib/encryptedStorage'
+import { registerEncryptedRehydrate } from '../lib/dataEncryption'
 import type { Goal, GoalMilestone, GoalStoreState } from '../types/goal.types'
 
 type GoalsStoreActions = {
@@ -183,7 +184,7 @@ export const useGoalsStore = create<GoalsStore>()(
     })),
     {
       name: 'mybase-goals',
-      storage: createZustandStorage(),
+      storage: createEncryptedStorage(),
       partialize: (state) => ({ goals: state.goals, activeGoalId: state.activeGoalId }),
     },
   ),
@@ -230,3 +231,4 @@ export function getMomentumData(goals: Goal[]): { day: string; count: number }[]
     }
   })
 }
+registerEncryptedRehydrate(() => useGoalsStore.persist.rehydrate())

@@ -3,7 +3,8 @@ import { v4 as uuidv4 } from 'uuid'
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 import { persist } from 'zustand/middleware'
-import { createZustandStorage } from '../lib/storage'
+import { createEncryptedStorage } from '../lib/encryptedStorage'
+import { registerEncryptedRehydrate } from '../lib/dataEncryption'
 import type { DailyLog, HealthProfile } from '../types/health.types'
 
 type HealthStoreState = {
@@ -135,7 +136,7 @@ export const useHealthStore = create<HealthStore>()(
     {
       name: 'mybase-health',
       version: 2,
-      storage: createZustandStorage(),
+      storage: createEncryptedStorage(),
       partialize: (state) => ({ logs: state.logs, profile: state.profile }),
       migrate: (persistedState: unknown) => {
         const next = persistedState as Partial<HealthStoreState> | undefined
@@ -332,3 +333,5 @@ export function getEnergyEmoji(level: 1 | 2 | 3 | 4 | 5 | undefined): string {
 export function getCurrentMonthTotalDays(): number {
   return getDaysInMonth(new Date())
 }
+
+registerEncryptedRehydrate(() => useHealthStore.persist.rehydrate())

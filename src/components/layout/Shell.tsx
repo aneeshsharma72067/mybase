@@ -3,9 +3,11 @@ import { useLocation } from 'react-router-dom'
 import { applyAccent, applyBorderStyle, applyTheme } from '../../lib/settingsAppearance'
 import { useAutoLock } from '../../lib/useAutoLock'
 import { useAppStore } from '../../store/useAppStore'
+import { usePasswordStore } from '../../store/usePasswordStore'
 import { useSettingsStore } from '../../store/useSettingsStore'
 import { DailyCheckInModal } from '../health/DailyCheckInModal'
 import { OnboardingModal } from '../onboarding/OnboardingModal'
+import { AppLockScreen } from './AppLockScreen'
 import { MainArea } from './MainArea'
 import { Sidebar } from './Sidebar'
 
@@ -27,9 +29,12 @@ export function Shell() {
   const setActiveModule = useAppStore((state) => state.setActiveModule)
   const settings = useSettingsStore((state) => state.settings)
   const patchSettings = useSettingsStore((state) => state.patchSettings)
+  const vaultState = usePasswordStore((state) => state.vaultState)
   const [showCheckIn, setShowCheckIn] = useState(false)
 
   useAutoLock()
+
+  const isAppLocked = settings.encryptData && vaultState !== 'unlocked'
 
   useEffect(() => {
     setActiveModule(moduleByPath[location.pathname] ?? 'dashboard')
@@ -40,6 +45,10 @@ export function Shell() {
     applyAccent(settings.accent)
     applyBorderStyle(settings.borderStyle)
   }, [settings.accent, settings.borderStyle, settings.themeMode])
+
+  if (isAppLocked) {
+    return <AppLockScreen />
+  }
 
   return (
     <div className="min-h-screen bg-background text-on-background lg:grid lg:grid-cols-[18rem_1fr]">

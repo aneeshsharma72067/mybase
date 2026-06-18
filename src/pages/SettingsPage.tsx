@@ -1,12 +1,17 @@
-import { Database, Download, KeyRound, Palette, Shield, Upload, User } from 'lucide-react'
+import { Database, Download, KeyRound, Lock, Palette, Shield, Upload, User } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChangeMasterPasswordModal } from '../components/settings/ChangeMasterPasswordModal'
+import { EncryptionSetupModal } from '../components/settings/EncryptionSetupModal'
 import { ImportConfirmModal } from '../components/settings/ImportConfirmModal'
 import { SettingsHeader } from '../components/settings/SettingsHeader'
 import { SettingsSection } from '../components/settings/SettingsSection'
+import { SettingsSwitchRow } from '../components/settings/SettingsSwitchRow'
 import { downloadBackup, importBackupFromFile, validateBackup, type BackupSummary } from '../lib/backup'
+import { decryptAllStores, encryptAllStores } from '../lib/dataEncryption'
+import { setDataEncryptionEnabled } from '../lib/encryptedStorage'
 import { applyAccent, applyBorderStyle, applyTheme } from '../lib/settingsAppearance'
 import { fileToDataUrl, MAX_AVATAR_BYTES } from '../lib/utils'
+import { getVaultKey } from '../lib/vaultKey'
 import { usePasswordStore } from '../store/usePasswordStore'
 import { useSettingsStore } from '../store/useSettingsStore'
 import type { SettingsAccent, SettingsBorderStyle, UserSettings } from '../types/settings.types'
@@ -34,7 +39,9 @@ const borderStyleOptions: Array<{ value: SettingsBorderStyle; label: string; hin
 export function SettingsPage() {
   const savedSettings = useSettingsStore((state) => state.settings)
   const setSettings = useSettingsStore((state) => state.setSettings)
+  const patchSettings = useSettingsStore((state) => state.patchSettings)
   const changeMasterPassword = usePasswordStore((state) => state.changeMasterPassword)
+  const setupVault = usePasswordStore((state) => state.setupVault)
   const vaultMeta = usePasswordStore((state) => state.meta)
   const [draft, setDraft] = useState(savedSettings)
   const [statusText, setStatusText] = useState('Adjust your setup and save when ready')
@@ -44,6 +51,78 @@ export function SettingsPage() {
   const avatarInputRef = useRef<HTMLInputElement>(null)
   const backupInputRef = useRef<HTMLInputElement>(null)
   const [pendingImport, setPendingImport] = useState<{ file: File; summary: BackupSummary } | null>(null)
+  const [isEncryptionModalOpen, setIsEncryptionModalOpen] = useState(false)
+  const [isEncrypting, setIsEncrypting] = useState(false)
+  const [encryptionError, setEncryptionError] = useState('')
+
+  // Whether enabling encryption needs to create a master password (no vault yet).
+  const needsPasswordSetup = vaultMeta === null
+
+  function handleEncryptionToggle(next: boolean) {
+    setEncryptionError('')
+
+    if (next) {
+      // Enabling: a confirmation + (maybe) password setup is required.
+      setIsEncryptionModalOpen(true)
+      return
+    }
+
+    void handleDisableEncryption()
+  }
+
+  async function handleConfirmEnableEncryption(password: string) {
+    setEncryptionError('')
+    setIsEncrypting(true)
+
+    try {
+      // Ensure a key exists: create the vault if needed, otherwise the vault
+      // must already be unlocked so the key is in memory.
+      if (needsPasswordSetup) {
+        await setupVault(password)
+      } else if (getVaultKey() === null) {
+        setEncryptionError('Unlock your vault in Passwords first, then try again.')
+        return
+      }
+
+      const key = getVaultKey()
+
+      if (!key) {
+        setEncryptionError('Could not access encryption key. Please try again.')
+        return
+      }
+
+      // Flip the flag BEFORE migrating so subsequent store writes encrypt.
+      setDataEncryptionEnabled(true)
+      await encryptAllStores(key)
+      patchSettings({ encryptData: true })
+
+      setIsEncryptionModalOpen(false)
+      setStatusText('All data is now encrypted')
+    } catch {
+      setDataEncryptionEnabled(false)
+      setEncryptionError('Encryption failed. Your data was not changed.')
+    } finally {
+      setIsEncrypting(false)
+    }
+  }
+
+  async function handleDisableEncryption() {
+    const key = getVaultKey()
+
+    if (!key) {
+      setStatusText('Unlock the app before disabling encryption')
+      return
+    }
+
+    try {
+      await decryptAllStores(key)
+      setDataEncryptionEnabled(false)
+      patchSettings({ encryptData: false })
+      setStatusText('Encryption disabled — data stored as plain text')
+    } catch {
+      setStatusText('Could not disable encryption')
+    }
+  }
 
   function handleExport() {
     try {
@@ -365,6 +444,20 @@ export function SettingsPage() {
                 ))}
               </select>
             </div>
+
+            <div className="border-t border-outline-variant/20 pt-6">
+              <SettingsSwitchRow
+                title="Encrypt all data"
+                description="Encrypt every module at rest with your master password. Requires unlocking on each visit."
+                checked={savedSettings.encryptData}
+                onChange={handleEncryptionToggle}
+              />
+              {savedSettings.encryptData ? (
+                <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-primary-container/40 px-3 py-1 text-xs font-semibold text-primary">
+                  <Lock size={12} /> Your data is encrypted on this device
+                </p>
+              ) : null}
+            </div>
           </div>
         </SettingsSection>
 
@@ -451,6 +544,20 @@ export function SettingsPage() {
         storeCount={pendingImport?.summary.keys.length ?? 0}
         onConfirm={() => void handleConfirmImport()}
         onClose={() => setPendingImport(null)}
+      />
+
+      <EncryptionSetupModal
+        isOpen={isEncryptionModalOpen}
+        needsPasswordSetup={needsPasswordSetup}
+        isSaving={isEncrypting}
+        errorText={encryptionError}
+        onClose={() => {
+          if (!isEncrypting) {
+            setIsEncryptionModalOpen(false)
+            setEncryptionError('')
+          }
+        }}
+        onConfirm={(password) => void handleConfirmEnableEncryption(password)}
       />
     </div>
   )
