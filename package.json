@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://aneeshsharma72067.github.io/mybase",
+  "homepage": "https://jiffyaneesh.github.io/mybase",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
