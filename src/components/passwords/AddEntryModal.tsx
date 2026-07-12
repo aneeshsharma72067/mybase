@@ -1,5 +1,5 @@
 import { Eye, EyeOff, X } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { calculateStrength } from '../../store/usePasswordStore'
 import type { PasswordEntry } from '../../types/password.types'
 
@@ -40,6 +40,9 @@ export function AddEntryModal({ isOpen, editingEntry, prefillPassword, isSaving,
   const [errorText, setErrorText] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const firstInputRef = useRef<HTMLInputElement>(null)
+
   useEffect(() => {
     if (!isOpen) {
       setIsVisible(false)
@@ -62,18 +65,51 @@ export function AddEntryModal({ isOpen, editingEntry, prefillPassword, isSaving,
   }, [editingEntry, isOpen, prefillPassword])
 
   useEffect(() => {
+    if (isOpen) {
+      firstInputRef.current?.focus()
+    }
+  }, [isOpen])
+
+  useEffect(() => {
     if (!isOpen) {
       return
     }
 
-    function handleEscape(event: KeyboardEvent) {
+    const selector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+
+    function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
+        event.preventDefault()
         onClose()
+        return
+      }
+
+      if (event.key !== 'Tab') {
+        return
+      }
+
+      const items = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(selector) ?? []).filter(
+        (element) => !element.hasAttribute('disabled'),
+      )
+
+      if (items.length === 0) {
+        return
+      }
+
+      const first = items[0]
+      const last = items[items.length - 1]
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
       }
     }
 
-    window.addEventListener('keydown', handleEscape)
-    return () => window.removeEventListener('keydown', handleEscape)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, onClose])
 
   const strength = useMemo(() => {
@@ -115,6 +151,8 @@ export function AddEntryModal({ isOpen, editingEntry, prefillPassword, isSaving,
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
       className={[
         'fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 py-6 backdrop-blur-sm transition-opacity duration-220 ease-out',
         isVisible ? 'opacity-100' : 'opacity-0',
@@ -122,6 +160,7 @@ export function AddEntryModal({ isOpen, editingEntry, prefillPassword, isSaving,
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
         className={[
           'h-[80vh] w-full max-w-lg overflow-y-scroll rounded-[2.5rem] bg-surface-container-lowest p-6 shadow-2xl transition-all duration-220 ease-out md:p-8',
           isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
@@ -151,6 +190,7 @@ export function AddEntryModal({ isOpen, editingEntry, prefillPassword, isSaving,
               Label
             </label>
             <input
+              ref={firstInputRef}
               id="add-entry-label"
               value={label}
               onChange={(event) => setLabel(event.target.value)}

@@ -1,5 +1,5 @@
 import { Leaf, Upload } from 'lucide-react'
-import { useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { fileToDataUrl, MAX_AVATAR_BYTES } from '../../lib/utils'
 
 interface OnboardingModalProps {
@@ -12,6 +12,45 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
   const [avatarUrl, setAvatarUrl] = useState('')
   const [error, setError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const selector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        // Prevent escape from closing since onboarding is mandatory.
+        event.preventDefault()
+        return
+      }
+
+      if (event.key !== 'Tab') {
+        return
+      }
+
+      const items = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(selector) ?? []).filter(
+        (element) => !element.hasAttribute('disabled'),
+      )
+
+      if (items.length === 0) {
+        return
+      }
+
+      const first = items[0]
+      const last = items[items.length - 1]
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   async function handleAvatarChange(file: File | undefined) {
     if (!file) {
@@ -52,8 +91,15 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
   const initial = displayName.trim().charAt(0).toUpperCase() || '?'
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-4xl bg-surface-container-lowest p-6 shadow-2xl md:p-8">
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm"
+    >
+      <div
+        ref={dialogRef}
+        className="w-full max-w-lg rounded-4xl bg-surface-container-lowest p-6 shadow-2xl md:p-8"
+      >
         <div className="mb-8 flex items-center gap-3">
           <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-container text-primary">
             <Leaf size={22} />

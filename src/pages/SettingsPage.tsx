@@ -341,11 +341,13 @@ export function SettingsPage() {
           <div className="space-y-10">
             <div className="space-y-4">
               <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-on-surface-variant">Color Theme</h3>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-4" role="radiogroup" aria-label="Color Theme">
                 {([['light', 'Light'], ['dark', 'Dark'], ['auto', 'Auto']] as const).map(([value, label]) => (
                   <button
                     key={value}
                     type="button"
+                    role="radio"
+                    aria-checked={draft.themeMode === value}
                     onClick={() => updateDraft({ themeMode: value })}
                     className={[
                       'rounded-xl border-2 px-4 py-4 text-xs font-bold transition-colors',
@@ -362,11 +364,13 @@ export function SettingsPage() {
 
             <div className="space-y-4">
               <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-on-surface-variant">Accent Color</h3>
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap gap-4" role="radiogroup" aria-label="Accent Color">
                 {(Object.keys(accentMap) as SettingsAccent[]).map((accent) => (
                   <button
                     key={accent}
                     type="button"
+                    role="radio"
+                    aria-checked={draft.accent === accent}
                     onClick={() => updateDraft({ accent })}
                     className="inline-flex items-center gap-3"
                   >
@@ -387,11 +391,13 @@ export function SettingsPage() {
 
             <div className="space-y-4">
               <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-on-surface-variant">Corner Style</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4" role="radiogroup" aria-label="Corner Style">
                 {borderStyleOptions.map((option) => (
                   <button
                     key={option.value}
                     type="button"
+                    role="radio"
+                    aria-checked={draft.borderStyle === option.value}
                     onClick={() => updateDraft({ borderStyle: option.value })}
                     className={[
                       'flex flex-col items-start gap-1 border-2 px-4 py-4 text-left transition-colors',

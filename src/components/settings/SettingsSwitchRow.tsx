@@ -16,6 +16,7 @@ export function SettingsSwitchRow({ title, description, checked, onChange }: Set
         type="button"
         role="switch"
         aria-checked={checked}
+        aria-label={title}
         onClick={() => onChange(!checked)}
         className={[
           'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',

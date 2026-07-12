@@ -30,7 +30,11 @@ export function IncomeVsExpensesChart({ data, peakMonth }: IncomeVsExpensesChart
         </div>
       </div>
 
-      <div className="h-64 border-b border-surface-variant px-4">
+      <div
+        className="h-64 border-b border-surface-variant px-4"
+        role="img"
+        aria-label="Bar chart showing monthly income versus expenses comparison"
+      >
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 8, right: 0, left: -10, bottom: 0 }} barCategoryGap={16}>
             <CartesianGrid vertical={false} stroke="var(--color-outline-variant)" strokeOpacity={0.18} />

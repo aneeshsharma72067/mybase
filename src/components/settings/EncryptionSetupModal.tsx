@@ -1,5 +1,5 @@
 import { AlertTriangle, Lock, X } from 'lucide-react'
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 
 interface EncryptionSetupModalProps {
   isOpen: boolean
@@ -24,6 +24,62 @@ export function EncryptionSetupModal({
   const [confirm, setConfirm] = useState('')
   const [acknowledged, setAcknowledged] = useState(false)
   const [localError, setLocalError] = useState('')
+
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const firstInputRef = useRef<HTMLInputElement>(null)
+  const checkboxRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (isOpen) {
+      if (needsPasswordSetup) {
+        firstInputRef.current?.focus()
+      } else {
+        checkboxRef.current?.focus()
+      }
+    }
+  }, [isOpen, needsPasswordSetup])
+
+  useEffect(() => {
+    if (!isOpen) {
+      return
+    }
+
+    const selector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape' && !isSaving) {
+        event.preventDefault()
+        onClose()
+        return
+      }
+
+      if (event.key !== 'Tab') {
+        return
+      }
+
+      const items = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(selector) ?? []).filter(
+        (element) => !element.hasAttribute('disabled'),
+      )
+
+      if (items.length === 0) {
+        return
+      }
+
+      const first = items[0]
+      const last = items[items.length - 1]
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, isSaving, onClose])
 
   if (!isOpen) {
     return null
@@ -55,6 +111,8 @@ export function EncryptionSetupModal({
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 py-6 backdrop-blur-sm"
       onClick={() => {
         if (!isSaving) {
@@ -63,6 +121,7 @@ export function EncryptionSetupModal({
       }}
     >
       <div
+        ref={dialogRef}
         className="w-full max-w-lg rounded-4xl bg-surface-container-lowest p-6 shadow-2xl md:p-8"
         onClick={(event) => event.stopPropagation()}
       >
@@ -96,6 +155,7 @@ export function EncryptionSetupModal({
               <label className="block space-y-2">
                 <span className="px-1 text-sm font-bold text-on-surface-variant">Master Password</span>
                 <input
+                  ref={firstInputRef}
                   type="password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
@@ -122,6 +182,7 @@ export function EncryptionSetupModal({
             <AlertTriangle size={18} className="mt-0.5 shrink-0 text-error" />
             <label className="flex items-start gap-3 text-sm text-on-surface">
               <input
+                ref={checkboxRef}
                 type="checkbox"
                 checked={acknowledged}
                 onChange={(event) => setAcknowledged(event.target.checked)}

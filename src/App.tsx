@@ -1,31 +1,53 @@
+import { lazy, Suspense } from 'react'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { ErrorBoundary } from './components/layout/ErrorBoundary'
+import { PageFallback } from './components/layout/PageFallback'
 import { Shell } from './components/layout/Shell'
-import { BookmarksPage } from './pages/BookmarksPage'
-import { DashboardPage } from './pages/DashboardPage'
-import { GoalsPage } from './pages/GoalsPage'
-import { HealthPage } from './pages/HealthPage'
 import { HomeRedirectPage } from './pages/HomeRedirectPage'
-import { IncomePage } from './pages/IncomePage'
-import { PasswordsPage } from './pages/PasswordsPage'
-import { SettingsPage } from './pages/SettingsPage'
-import { ThoughtsPage } from './pages/ThoughtsPage'
-import { TodoPage } from './pages/TodoPage'
+
+// Route-level code splitting: each page becomes its own chunk, loaded on
+// navigation instead of in the initial bundle. Pages are named exports, so map
+// them onto the default export React.lazy expects. HomeRedirectPage stays eager
+// — it only redirects, so lazy-loading it would add a needless Suspense flash
+// on first paint.
+const DashboardPage = lazy(() =>
+  import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage })),
+)
+const HealthPage = lazy(() => import('./pages/HealthPage').then((m) => ({ default: m.HealthPage })))
+const ThoughtsPage = lazy(() =>
+  import('./pages/ThoughtsPage').then((m) => ({ default: m.ThoughtsPage })),
+)
+const GoalsPage = lazy(() => import('./pages/GoalsPage').then((m) => ({ default: m.GoalsPage })))
+const TodoPage = lazy(() => import('./pages/TodoPage').then((m) => ({ default: m.TodoPage })))
+const BookmarksPage = lazy(() =>
+  import('./pages/BookmarksPage').then((m) => ({ default: m.BookmarksPage })),
+)
+const PasswordsPage = lazy(() =>
+  import('./pages/PasswordsPage').then((m) => ({ default: m.PasswordsPage })),
+)
+const IncomePage = lazy(() => import('./pages/IncomePage').then((m) => ({ default: m.IncomePage })))
+const SettingsPage = lazy(() =>
+  import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })),
+)
+
+function lazyRoute(element: React.ReactNode) {
+  return <Suspense fallback={<PageFallback />}>{element}</Suspense>
+}
 
 const router = createBrowserRouter([
   {
     element: <Shell />,
     children: [
       { index: true, element: <HomeRedirectPage /> },
-      { path: 'dashboard', element: <DashboardPage /> },
-      { path: 'health', element: <HealthPage /> },
-      { path: 'thoughts', element: <ThoughtsPage /> },
-      { path: 'goals', element: <GoalsPage /> },
-      { path: 'todos', element: <TodoPage /> },
-      { path: 'bookmarks', element: <BookmarksPage /> },
-      { path: 'passwords', element: <PasswordsPage /> },
-      { path: 'income', element: <IncomePage /> },
-      { path: 'settings', element: <SettingsPage /> },
+      { path: 'dashboard', element: lazyRoute(<DashboardPage />) },
+      { path: 'health', element: lazyRoute(<HealthPage />) },
+      { path: 'thoughts', element: lazyRoute(<ThoughtsPage />) },
+      { path: 'goals', element: lazyRoute(<GoalsPage />) },
+      { path: 'todos', element: lazyRoute(<TodoPage />) },
+      { path: 'bookmarks', element: lazyRoute(<BookmarksPage />) },
+      { path: 'passwords', element: lazyRoute(<PasswordsPage />) },
+      { path: 'income', element: lazyRoute(<IncomePage />) },
+      { path: 'settings', element: lazyRoute(<SettingsPage />) },
     ],
   },
 ], {
