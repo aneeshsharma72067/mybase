@@ -3,6 +3,7 @@ import { immer } from 'zustand/middleware/immer'
 import { persist } from 'zustand/middleware'
 import { format, isSameDay, subDays } from 'date-fns'
 import { createEncryptedStorage } from '../lib/encryptedStorage'
+import { createMergeMigrate } from '../lib/storage'
 import { registerEncryptedRehydrate } from '../lib/dataEncryption'
 import { generateId, getTodayISO } from '../lib/utils'
 import type { Todo, TodoList, TodoStoreState } from '../types/todo.types'
@@ -97,8 +98,10 @@ export const useTodoStore = create<TodoStore>()(
     })),
     {
       name: 'mybase-todos',
+      version: 1,
       storage: createEncryptedStorage(),
       partialize: (state) => ({ todos: state.todos, lists: state.lists }),
+      migrate: createMergeMigrate({ todos: initialState.todos, lists: initialState.lists }),
     },
   ),
 )

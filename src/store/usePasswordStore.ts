@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 import { persist } from 'zustand/middleware'
-import { createZustandStorage } from '../lib/storage'
+import { createMergeMigrate, createZustandStorage } from '../lib/storage'
 import { generateId } from '../lib/utils'
 import {
   createVerificationToken,
@@ -337,11 +337,17 @@ export const usePasswordStore = create<PasswordStore>()(
     })),
     {
       name: 'mybase-passwords',
+      version: 1,
       storage: createZustandStorage(),
       partialize: (state) => ({
         entries: state.entries,
         meta: state.meta,
         searchQuery: state.searchQuery,
+      }),
+      migrate: createMergeMigrate({
+        entries: initialState.entries,
+        meta: initialState.meta,
+        searchQuery: initialState.searchQuery,
       }),
       onRehydrateStorage: () => (state) => {
         if (!state) {

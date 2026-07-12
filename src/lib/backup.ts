@@ -83,6 +83,24 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 }
 
 /**
+ * A stored value is valid if it looks like either a zustand persist payload
+ * (`{ state: {...} }`, optionally with a numeric `version`) or an encrypted
+ * envelope (`{ __mbenc: 1, ct, iv }`). Anything else (a primitive, an array, a
+ * shapeless object) would corrupt the store on restore, so reject it.
+ */
+function isValidStoreValue(value: unknown): boolean {
+  if (!isPlainObject(value)) {
+    return false
+  }
+
+  const isEnvelope =
+    value.__mbenc === 1 && typeof value.ct === 'string' && typeof value.iv === 'string'
+  const isPersistPayload = isPlainObject(value.state)
+
+  return isEnvelope || isPersistPayload
+}
+
+/**
  * Validate a parsed backup payload. Returns a summary of recognised stores,
  * or throws with a human-readable message if the file is not a MyBase backup.
  */
@@ -103,13 +121,22 @@ export function validateBackup(payload: unknown): BackupSummary {
     throw new Error('Backup is missing its data section.')
   }
 
-  const keys = Object.keys(payload.data).filter((key) =>
+  const data = payload.data
+  const recognisedKeys = Object.keys(data).filter((key) =>
     (MYBASE_STORAGE_KEYS as readonly string[]).includes(key),
   )
 
-  if (keys.length === 0) {
+  if (recognisedKeys.length === 0) {
     throw new Error('Backup contains no recognisable MyBase data.')
   }
+
+  const corruptKey = recognisedKeys.find((key) => !isValidStoreValue(data[key]))
+
+  if (corruptKey) {
+    throw new Error(`Backup data for "${corruptKey}" is malformed.`)
+  }
+
+  const keys = recognisedKeys
 
   return {
     exportedAt: typeof payload.exportedAt === 'string' ? payload.exportedAt : '',

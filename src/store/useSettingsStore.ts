@@ -46,8 +46,16 @@ export const useSettingsStore = create<SettingsStore>()(
     })),
     {
       name: 'mybase-settings',
+      version: 1,
       storage: createZustandStorage(),
       partialize: (state) => ({ settings: state.settings }),
+      // Merge persisted settings over defaults so fields added in newer
+      // versions (e.g. encryptData) fall back instead of coming through as
+      // undefined. A corrupt payload resets to defaults.
+      migrate: (persistedState: unknown) => {
+        const next = persistedState as { settings?: Partial<UserSettings> } | undefined
+        return { settings: { ...initialSettings, ...(next?.settings ?? {}) } }
+      },
     },
   ),
 )
