@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://aneeshsharma72067.github.io/mybase/sitemap.xml

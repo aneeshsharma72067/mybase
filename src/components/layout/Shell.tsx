@@ -6,6 +6,7 @@ import { useAutoLock } from '../../lib/useAutoLock'
 import { useAppStore } from '../../store/useAppStore'
 import { usePasswordStore } from '../../store/usePasswordStore'
 import { useSettingsStore } from '../../store/useSettingsStore'
+import { ConfirmDialog } from '../common/ConfirmDialog'
 import { DailyCheckInModal } from '../health/DailyCheckInModal'
 import { OnboardingModal } from '../onboarding/OnboardingModal'
 import { AppLockScreen } from './AppLockScreen'
@@ -32,6 +33,7 @@ export function Shell() {
   const patchSettings = useSettingsStore((state) => state.patchSettings)
   const vaultState = usePasswordStore((state) => state.vaultState)
   const [showCheckIn, setShowCheckIn] = useState(false)
+  const [isNavOpen, setIsNavOpen] = useState(false)
 
   useAutoLock()
 
@@ -57,8 +59,13 @@ export function Shell() {
 
   return (
     <div className="min-h-screen bg-background text-on-background lg:grid lg:grid-cols-[18rem_1fr]">
-      <Sidebar onOpenCheckIn={() => setShowCheckIn(true)} />
-      <MainArea />
+      <Sidebar
+        onOpenCheckIn={() => setShowCheckIn(true)}
+        isOpen={isNavOpen}
+        onClose={() => setIsNavOpen(false)}
+      />
+      <MainArea onOpenNav={() => setIsNavOpen(true)} />
+      <ConfirmDialog />
       <DailyCheckInModal isOpen={showCheckIn} onClose={() => setShowCheckIn(false)} />
       {!settings.onboarded ? (
         <OnboardingModal

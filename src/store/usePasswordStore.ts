@@ -66,7 +66,7 @@ const initialState: PasswordStoreState = {
 export function calculateStrength(plainPassword: string): 'weak' | 'fair' | 'strong' {
   const hasUppercase = /[A-Z]/.test(plainPassword)
   const hasNumbers = /\d/.test(plainPassword)
-  const hasSpecial = /[!@#$%^&*()_+\-=\[\]{}|;':",.<>?/`~\\]/.test(plainPassword)
+  const hasSpecial = /[!@#$%^&*()_+\-=[\]{}|;':",.<>?/`~\\]/.test(plainPassword)
 
   if (plainPassword.length >= 12 && hasUppercase && hasNumbers && hasSpecial) {
     return 'strong'

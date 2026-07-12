@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { X } from 'lucide-react'
+import { confirmAction } from '../../lib/confirm'
 import { useGoalsStore } from '../../store/useGoalsStore'
 import type { GoalType } from '../../types/goal.types'
 
@@ -43,9 +44,17 @@ export function AddGoalModal({ isOpen, onClose }: AddGoalModalProps) {
     setIsFocused(false)
   }
 
-  const requestClose = useCallback(() => {
-    if (title.trim().length > 0 && !window.confirm('Discard this new goal?')) {
-      return
+  const requestClose = useCallback(async () => {
+    if (title.trim().length > 0) {
+      const confirmed = await confirmAction({
+        title: 'Discard this goal?',
+        message: 'Your unsaved changes will be lost.',
+        confirmLabel: 'Discard',
+        destructive: true,
+      })
+      if (!confirmed) {
+        return
+      }
     }
 
     onClose()

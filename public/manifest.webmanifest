@@ -1,0 +1,20 @@
+{
+  "name": "MyBase — Personal Life Dashboard",
+  "short_name": "MyBase",
+  "description": "A private, all-in-one dashboard for health, goals, todos, finances, thoughts, bookmarks, and passwords. Your data stays on your device.",
+  "id": "/mybase/",
+  "start_url": "/mybase/",
+  "scope": "/mybase/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f4fcf2",
+  "theme_color": "#006d3f",
+  "icons": [
+    {
+      "src": "/mybase/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
