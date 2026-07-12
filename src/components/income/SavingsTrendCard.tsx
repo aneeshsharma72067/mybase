@@ -19,7 +19,11 @@ export function SavingsTrendCard({ trendData, projectedSavings }: SavingsTrendCa
         <span className="text-sm opacity-70">↗</span>
       </div>
 
-      <div className="h-24">
+      <div
+        className="h-24"
+        role="img"
+        aria-label="Line chart showing savings trend over time"
+      >
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={displayData} margin={{ top: 8, right: 0, left: 0, bottom: 0 }}>
             <Line type="monotone" dataKey="savings" stroke="white" strokeWidth={3} dot={false} />

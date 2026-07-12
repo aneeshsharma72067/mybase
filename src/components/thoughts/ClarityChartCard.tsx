@@ -173,7 +173,11 @@ export function ClarityChartCard() {
         </div>
       </div>
 
-      <div className="h-56">
+      <div
+        className="h-56"
+        role="img"
+        aria-label="Bar chart showing thought clarity score distribution over time"
+      >
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} margin={{ top: 8, right: 0, left: -10, bottom: 0 }} barCategoryGap={mode === 'month' ? 16 : 12}>
             <CartesianGrid vertical={false} stroke="var(--color-outline-variant)" strokeOpacity={0.18} />

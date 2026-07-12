@@ -51,7 +51,11 @@ export function BookmarksHero({ heroBookmark, distribution, totalCount, onOpenHe
     <div className="grid grid-cols-12 gap-8 mb-12">
       <div className="col-span-12 lg:col-span-4 rounded-xl bg-surface-container-lowest p-10 text-center">
         <h3 className="mb-8 font-display text-lg font-bold text-on-surface">Category Distribution</h3>
-        <div className="mx-auto mb-8 h-40 w-40">
+        <div
+          className="mx-auto mb-8 h-40 w-40"
+          role="img"
+          aria-label="Category distribution pie chart of bookmarks"
+        >
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie data={chartData} dataKey="count" innerRadius={46} outerRadius={78} stroke="none">

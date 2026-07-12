@@ -1,4 +1,5 @@
 import { AlertTriangle, X } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 
 interface ImportConfirmModalProps {
   isOpen: boolean
@@ -17,6 +18,57 @@ export function ImportConfirmModal({
   onConfirm,
   onClose,
 }: ImportConfirmModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const cancelButtonRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (isOpen) {
+      cancelButtonRef.current?.focus()
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen) {
+      return
+    }
+
+    const selector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onClose()
+        return
+      }
+
+      if (event.key !== 'Tab') {
+        return
+      }
+
+      const items = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(selector) ?? []).filter(
+        (element) => !element.hasAttribute('disabled'),
+      )
+
+      if (items.length === 0) {
+        return
+      }
+
+      const first = items[0]
+      const last = items[items.length - 1]
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
+
   if (!isOpen) {
     return null
   }
@@ -25,10 +77,13 @@ export function ImportConfirmModal({
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 py-6 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
         className="w-full max-w-md rounded-4xl bg-surface-container-lowest p-6 shadow-2xl md:p-8"
         onClick={(event) => event.stopPropagation()}
       >
@@ -64,6 +119,7 @@ export function ImportConfirmModal({
 
         <div className="mt-8 flex items-center justify-end gap-3">
           <button
+            ref={cancelButtonRef}
             type="button"
             onClick={onClose}
             className="rounded-xl border border-outline-variant bg-surface px-5 py-2.5 text-sm font-bold text-on-surface transition-colors hover:bg-surface-container"

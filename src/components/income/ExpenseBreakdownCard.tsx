@@ -51,7 +51,11 @@ export function ExpenseBreakdownCard({ breakdown, topCategory }: ExpenseBreakdow
       <h4 className="mb-6 font-display text-lg font-bold">Expense Breakdown</h4>
 
       <div className="flex items-center justify-center py-4">
-        <div className="relative h-40 w-40">
+        <div
+          className="relative h-40 w-40"
+          role="img"
+          aria-label="Pie chart showing category breakdown of expenses"
+        >
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie data={chartData} dataKey="amount" innerRadius={46} outerRadius={78} stroke="none">

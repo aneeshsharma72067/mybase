@@ -1,5 +1,5 @@
 import { X, Trash2 } from 'lucide-react'
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { confirmAction } from '../../lib/confirm'
 import { getAllCategories, useIncomeStore } from '../../store/useIncomeStore'
 import type { Transaction, TransactionType } from '../../types/income.types'
@@ -57,19 +57,55 @@ export function AddTransactionModal({ open, onClose, prefillType, editingTransac
     return () => window.clearTimeout(timeoutId)
   }, [editingTransaction, open, prefillType])
 
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const firstInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (open) {
+      firstInputRef.current?.focus()
+    }
+  }, [open])
+
   useEffect(() => {
     if (!open) {
       return
     }
 
-    function handleEscape(event: KeyboardEvent) {
+    const selector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+
+    function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
+        event.preventDefault()
         onClose()
+        return
+      }
+
+      if (event.key !== 'Tab') {
+        return
+      }
+
+      const items = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(selector) ?? []).filter(
+        (element) => !element.hasAttribute('disabled'),
+      )
+
+      if (items.length === 0) {
+        return
+      }
+
+      const first = items[0]
+      const last = items[items.length - 1]
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
       }
     }
 
-    window.addEventListener('keydown', handleEscape)
-    return () => window.removeEventListener('keydown', handleEscape)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
   }, [onClose, open])
 
   function resetAndClose() {
@@ -132,6 +168,8 @@ export function AddTransactionModal({ open, onClose, prefillType, editingTransac
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
       className={[
         'fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 py-6 backdrop-blur-sm transition-opacity duration-220 ease-out',
         isVisible ? 'opacity-100' : 'opacity-0',
@@ -139,6 +177,7 @@ export function AddTransactionModal({ open, onClose, prefillType, editingTransac
       onClick={resetAndClose}
     >
       <div
+        ref={dialogRef}
         className={[
           'w-full max-w-lg rounded-[2.5rem] bg-surface-container-lowest p-6 shadow-2xl transition-all duration-220 ease-out md:p-8',
           isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
@@ -192,6 +231,7 @@ export function AddTransactionModal({ open, onClose, prefillType, editingTransac
               Description
             </label>
             <input
+              ref={firstInputRef}
               id="income-description"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
