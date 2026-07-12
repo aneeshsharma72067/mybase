@@ -1,5 +1,6 @@
 import { X, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { confirmAction } from '../../lib/confirm'
 import { getAllCategories, useIncomeStore } from '../../store/useIncomeStore'
 import type { Transaction, TransactionType } from '../../types/income.types'
 
@@ -106,12 +107,18 @@ export function AddTransactionModal({ open, onClose, prefillType, editingTransac
     resetAndClose()
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!editingTransaction) {
       return
     }
 
-    if (!window.confirm('Delete this transaction?')) {
+    const confirmed = await confirmAction({
+      title: 'Delete transaction?',
+      message: 'This transaction will be permanently removed.',
+      confirmLabel: 'Delete',
+      destructive: true,
+    })
+    if (!confirmed) {
       return
     }
 

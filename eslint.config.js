@@ -19,5 +19,13 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // Downgraded to a warning: the app deliberately uses effects to mirror
+      // external state into local state (mount/unmount animations, populating
+      // modal forms from the store on open). These are legitimate
+      // synchronization effects, not the cascading-render anti-pattern the rule
+      // targets, so they should not fail CI.
+      'react-hooks/set-state-in-effect': 'warn',
+    },
   },
 ])

@@ -8,6 +8,7 @@ import { IncomeSustainabilityCard } from '../components/income/IncomeSustainabil
 import { IncomeVsExpensesChart } from '../components/income/IncomeVsExpensesChart'
 import { RecentTransactionsTable } from '../components/income/RecentTransactionsTable'
 import { SavingsTrendCard } from '../components/income/SavingsTrendCard'
+import { confirmAction } from '../lib/confirm'
 import {
   getExpenseBreakdown,
   getFilteredTransactions,
@@ -95,8 +96,14 @@ export function IncomePage() {
     openTransactionModal(null, transaction)
   }
 
-  function handleDeleteTransaction(transaction: Transaction) {
-    if (!window.confirm('Delete this transaction?')) {
+  async function handleDeleteTransaction(transaction: Transaction) {
+    const confirmed = await confirmAction({
+      title: 'Delete transaction?',
+      message: 'This transaction will be permanently removed.',
+      confirmLabel: 'Delete',
+      destructive: true,
+    })
+    if (!confirmed) {
       return
     }
 

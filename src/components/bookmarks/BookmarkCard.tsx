@@ -1,5 +1,6 @@
 import { ExternalLink, MoreHorizontal, Pencil, Pin, Trash2 } from 'lucide-react'
 import { useState } from 'react'
+import { confirmAction } from '../../lib/confirm'
 import { getFaviconUrl, getGradientForCategory } from '../../store/useBookmarksStore'
 import type { Bookmark } from '../../types/bookmark.types'
 
@@ -34,11 +35,17 @@ export function BookmarkCard({ bookmark, mode, onEdit, onDelete, onPin }: Bookma
     window.open(safeUrl, '_blank', 'noopener noreferrer')
   }
 
-  function handleDelete() {
-    if (window.confirm('Delete this bookmark?')) {
+  async function handleDelete() {
+    setIsMenuOpen(false)
+    const confirmed = await confirmAction({
+      title: 'Delete bookmark?',
+      message: `"${safeTitle}" will be permanently removed.`,
+      confirmLabel: 'Delete',
+      destructive: true,
+    })
+    if (confirmed) {
       onDelete(bookmark)
     }
-    setIsMenuOpen(false)
   }
 
   if (mode === 'list') {
