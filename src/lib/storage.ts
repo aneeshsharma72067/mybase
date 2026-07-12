@@ -64,3 +64,22 @@ export function createPersistStorage(): StateStorage {
 export function createZustandStorage() {
   return createJSONStorage(() => createPersistStorage())
 }
+
+/**
+ * Build a persist `migrate` that merges the persisted payload over a set of
+ * defaults. This is the safe default migration: existing (unversioned, i.e.
+ * v0) data is preserved key-by-key, any keys added in a newer schema fall back
+ * to their default, and a corrupt/non-object payload resets to defaults rather
+ * than crashing hydration. Pass the same shape the store's `partialize` emits.
+ */
+export function createMergeMigrate<T extends Record<string, unknown>>(
+  defaults: T,
+): (persistedState: unknown) => T {
+  return (persistedState) => {
+    if (persistedState && typeof persistedState === 'object' && !Array.isArray(persistedState)) {
+      return { ...defaults, ...(persistedState as Partial<T>) }
+    }
+
+    return { ...defaults }
+  }
+}

@@ -47,8 +47,14 @@ export async function rehydrateEncryptedStores(): Promise<void> {
 /**
  * Encrypt every plaintext store payload in place. Idempotent: entries already
  * wrapped in an envelope are skipped. Used when the user enables encryption.
+ *
+ * Encrypts everything into memory first, then writes in a second pass, so a
+ * failure mid-encryption (e.g. a crypto error) cannot leave some stores
+ * encrypted and others plaintext.
  */
 export async function encryptAllStores(key: CryptoKey): Promise<void> {
+  const envelopes: Array<{ storeKey: string; serialized: string }> = []
+
   for (const storeKey of ENCRYPTED_STORE_KEYS) {
     const raw = window.localStorage.getItem(storeKey)
 
@@ -58,7 +64,11 @@ export async function encryptAllStores(key: CryptoKey): Promise<void> {
 
     const { ciphertext, iv } = await encryptText(raw, key)
     const envelope: EncryptedEnvelope = { __mbenc: 1, ct: ciphertext, iv }
-    window.localStorage.setItem(storeKey, JSON.stringify(envelope))
+    envelopes.push({ storeKey, serialized: JSON.stringify(envelope) })
+  }
+
+  for (const { storeKey, serialized } of envelopes) {
+    window.localStorage.setItem(storeKey, serialized)
   }
 }
 

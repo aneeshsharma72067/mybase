@@ -4,6 +4,7 @@ import { persist } from 'zustand/middleware'
 import { format, isSameDay, subDays } from 'date-fns'
 import { v4 as uuidv4 } from 'uuid'
 import { createEncryptedStorage } from '../lib/encryptedStorage'
+import { createMergeMigrate } from '../lib/storage'
 import { registerEncryptedRehydrate } from '../lib/dataEncryption'
 import type { Goal, GoalMilestone, GoalStoreState } from '../types/goal.types'
 
@@ -184,8 +185,10 @@ export const useGoalsStore = create<GoalsStore>()(
     })),
     {
       name: 'mybase-goals',
+      version: 1,
       storage: createEncryptedStorage(),
       partialize: (state) => ({ goals: state.goals, activeGoalId: state.activeGoalId }),
+      migrate: createMergeMigrate({ goals: initialState.goals, activeGoalId: initialState.activeGoalId }),
     },
   ),
 )

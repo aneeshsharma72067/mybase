@@ -37,7 +37,7 @@ MyBase is a comprehensive, centralized personal dashboard application designed t
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/aneeshsharma72067/mybase.git
+   git clone https://github.com/jiffyaneesh/mybase.git
    cd mybase
    ```
 

@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 import { persist } from 'zustand/middleware'
-import { createZustandStorage } from '../lib/storage'
+import { createMergeMigrate, createZustandStorage } from '../lib/storage'
 import type { AppStoreState } from '../types/app.types'
 
 type AppStoreActions = {
@@ -40,11 +40,17 @@ export const useAppStore = create<AppStore>()(
     })),
     {
       name: 'mybase-app',
+      version: 1,
       storage: createZustandStorage(),
       partialize: (state) => ({
         sidebarOpen: state.sidebarOpen,
         activeModule: state.activeModule,
         theme: state.theme,
+      }),
+      migrate: createMergeMigrate({
+        sidebarOpen: initialState.sidebarOpen,
+        activeModule: initialState.activeModule,
+        theme: initialState.theme,
       }),
     },
   ),

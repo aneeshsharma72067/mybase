@@ -4,6 +4,7 @@ import { immer } from 'zustand/middleware/immer'
 import { persist } from 'zustand/middleware'
 import { v4 as uuidv4 } from 'uuid'
 import { createEncryptedStorage } from '../lib/encryptedStorage'
+import { createMergeMigrate } from '../lib/storage'
 import { registerEncryptedRehydrate } from '../lib/dataEncryption'
 import type { Transaction } from '../types/income.types'
 
@@ -107,10 +108,15 @@ export const useIncomeStore = create<IncomeStore>()(
     })),
     {
       name: 'mybase-income',
+      version: 1,
       storage: createEncryptedStorage(),
       partialize: (state) => ({
         transactions: state.transactions,
         searchQuery: state.searchQuery,
+      }),
+      migrate: createMergeMigrate({
+        transactions: initialState.transactions,
+        searchQuery: initialState.searchQuery,
       }),
     },
   ),
